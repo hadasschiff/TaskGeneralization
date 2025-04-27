@@ -1,0 +1,160 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Navigation Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .game-container {
+            width: 100%;
+            height: 100vh;
+            background-color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            border: 20px solid #1e3c72;
+        }
+        
+        .header-bar {
+            width: 100%;
+            height: 40px;
+            background-color: #1e3c72;
+        }
+        
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+        }
+        
+        h1 {
+            color: #1e3c72;
+            font-weight: 700;
+            font-size: 42px;
+            letter-spacing: 1px;
+            margin-bottom: 40px;
+        }
+        
+        p {
+            font-size: 20px;
+            color: #4a4a4a;
+            line-height: 1.5;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        .car-container {
+            margin: 60px 0 40px 0;
+            width: 200px;
+            height: 160px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .car-image {
+            width: 100%;
+            height: auto;
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.15));
+            transition: transform 0.3s ease;
+        }
+        
+        .car-image:hover {
+            transform: translateY(-5px);
+        }
+        
+        .button-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            margin-bottom: 80px;
+        }
+
+        .start-btn {
+            padding: 18px 40px;
+            background: #1e3c72;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            letter-spacing: 1px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+        
+        .start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 25px rgba(0,0,0,0.15);
+            background: #2a5298;
+        }
+        
+        .start-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+        }
+        
+        @media (max-height: 600px) {
+            .car-container {
+                margin: 30px 0 20px 0;
+            }
+            
+            h1 {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header-bar"></div>
+        
+        <div class="content">
+            <h1>Navigation Game</h1>
+            
+            <p>You will be learning to navigate different vehicles.</p>
+            <p>Each vehicle has specific controls.</p>
+            
+            <div class="car-container">
+                <svg class="car-image" viewBox="0 0 512 512" fill="#000000">
+                    <path d="M499.99 176h-59.87l-16.64-41.6C406.38 91.63 365.57 64 319.5 64h-127c-46.06 0-86.88 27.63-103.99 70.4L71.87 176H12.01C4.2 176-1.53 183.34.37 190.91l6 24C7.7 220.25 12.5 224 18.01 224h20.07C24.65 235.73 16 252.78 16 272v48c0 16.12 6.16 30.67 16 41.93V416c0 17.67 14.33 32 32 32h32c17.67 0 32-14.33 32-32v-32h256v32c0 17.67 14.33 32 32 32h32c17.67 0 32-14.33 32-32v-54.07c9.84-11.25 16-25.8 16-41.93v-48c0-19.22-8.65-36.27-22.07-48H494c5.51 0 10.31-3.75 11.64-9.09l6-24c1.89-7.57-3.84-14.91-11.65-14.91zm-352.06-17.83c7.29-18.22 24.94-30.17 44.57-30.17h127c19.63 0 37.28 11.95 44.57 30.17L384 208H128l19.93-49.83zM96 319.8c-19.2 0-32-12.76-32-31.9S76.8 256 96 256s48 28.71 48 47.85-28.8 15.95-48 15.95zm320 0c-19.2 0-48 3.19-48-15.95S396.8 256 416 256s32 12.76 32 31.9-12.8 31.9-32 31.9z"/>
+                </svg>
+            </div>
+            
+            <div class="button-container">
+                <button class="start-btn" id="start-game-btn">START GAME</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript files -->
+
+    <script src="opening-slide.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
