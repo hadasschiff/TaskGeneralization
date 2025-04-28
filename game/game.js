@@ -13,7 +13,6 @@ function endGame() {
       <div class="completion-screen">
           <h1>Game Complete!</h1>
           <p>Thank you for participating.</p>
-          <div class="final-score">Final Score: ${score}</div>
       </div>
   `;
   
@@ -36,11 +35,6 @@ function endGame() {
           margin-bottom: 30px;
       }
       
-      .final-score {
-          font-size: 24px;
-          font-weight: bold;
-          margin: 30px 0;
-      }
   `;
   document.head.appendChild(styleEl);
   
@@ -105,36 +99,6 @@ function extractProlificParams() {
       gameData.sessionId = sessionId;
   }
 }
-// Vehicle Navigation Game - Main game functionality and logic
-// Game Configuration
-const GRID_SIZE = 4;
-const LEARNING_TRIALS = 8;
-const PLANNING_TRIALS = 20;
-const NEW_SIZE_TRIALS = 10;
-
-// Vehicle types and controls
-const VEHICLE_TYPES = {
-  CAR_SMALL: { type: 'car', size: 'small', upKey: 't', downKey: 'g', leftKey: 'z', rightKey: 'x' },
-  CAR_BIG: { type: 'car', size: 'big', upKey: 't', downKey: 'g', leftKey: 'b', rightKey: 'n' },
-  TRUCK_SMALL: { type: 'truck', size: 'small', upKey: 'u', downKey: 'j', leftKey: 's', rightKey: 'd' },
-  TRUCK_BIG: { type: 'truck', size: 'big', upKey: 'u', downKey: 'j', leftKey: 'f', rightKey: 'g' }
-};
-
-// Color palettes for vehicle types
-const COLOR_PALETTES = {
-  car: [
-      '#FF5733', '#FF8C33', '#FFC133', '#FFFF33', '#C1FF33', 
-      '#8CFF33', '#57FF33', '#33FF33', '#33FF57', '#33FF8C', 
-      '#33FFC1', '#33FFFF', '#33C1FF', '#338CFF', '#3357FF', 
-      '#3333FF', '#5733FF', '#8C33FF', '#C133FF', '#FF33FF'
-  ],
-  truck: [
-      '#FF3366', '#FF6699', '#FF99CC', '#FFCCFF', '#CC99FF', 
-      '#9966FF', '#6633FF', '#3300FF', '#0033FF', '#0066FF', 
-      '#0099FF', '#00CCFF', '#00FFFF', '#00FFCC', '#00FF99', 
-      '#00FF66', '#00FF33', '#33FF00', '#66FF00', '#99FF00'
-  ]
-};
 
 // Game state
 let currentPhase = 0;
@@ -151,6 +115,7 @@ let score = 0;
 let gridWorld = [];
 let obstacles = [];
 let rewards = [];
+let inputEnabled = true;
 
 // Data collection
 let gameData = {
@@ -161,9 +126,24 @@ let gameData = {
 // Initialize the game when opening slide transitions to game
 function initializeGame() {
   console.log('Initializing game');
-  
+  // Reset container styles for game
+  const container = document.querySelector('.game-container');
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.justifyContent = 'flex-start';
+  container.style.alignItems = 'center';
+  container.style.padding = '0';
+  container.style.height = '100vh';
+  container.style.width = '100vw';
+  container.style.backgroundColor = 'white';
+  document.documentElement.style.setProperty('--grid-size', GRID_SIZE);
+
   // Replace the opening slide with the game UI
   createGameUI();
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'style.css';
+  document.head.appendChild(link);
   
   // Set up keyboard listeners for navigation
   setupKeyboardListeners();
@@ -195,180 +175,25 @@ function createGameUI() {
       </div>
       
       <div class="controls-container">
-          <div id="controls-info"></div>
-      </div>
-  `;
-  
-  // Add game-specific styles
-  addGameStyles();
-}
-
-// Add game-specific styles
-function addGameStyles() {
-  // Create a style element
-  const styleEl = document.createElement('style');
-  
-  // Add game-specific CSS with REDUCED padding for controls container
-  styleEl.textContent = `
-      .header-bar {
-          display: flex;
-          justify-content: space-between;
-          padding: 10px 20px;
-          background-color: #1e3c72;
-          color: white;
-          font-weight: bold;
-      }
-      
-      .game-grid-outer-container {
-          position: relative;
-          display: flex;
-          justify-content: center;
-          align-items: flex-start;
-          padding: 20px;
-          gap: 30px;
-      }
-
-      .game-grid-inner-container {
-          display: flex;
-          flex-shring: 0;
-      }
-      
-      #game-grid {
-          display: grid;
-          grid-template-columns: repeat(${GRID_SIZE}, 1fr);
-          grid-template-rows: repeat(${GRID_SIZE}, 1fr);
-          gap: 2px;
-          width: 550px;
-          height: 520px;
-          background-color: #eee;
-          flex-shrink: 0;
-      }
-      
-      .grid-cell {
-          background-color: white;
-          position: relative;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          font-size: 24px;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      }
-      
-      .fade-overlay {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background-color: white;
-          opacity: 0;
-          z-index: 200;
-          pointer-events: none;
-          transition: opacity 0.5s ease;
-      }
-
-
-      .obstacle {
-          background-color: #ffcccc;
-      }
-      
-      .reward {
-          background-color: #ccffcc;
-      }
-      
-      .car-svg, .truck-svg {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-      }
-      
-      .controls-container {
-          padding: 6px; /* REDUCED padding for smaller bottom border */
-          display: flex;
-          justify-content: center;
-          background-color: #f0f0f0;
-      }
-      
-      .message-overlay {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background-color: rgba(0, 0, 0, 0.7);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          z-index: 100;
-      }
-      
-      .message-box {
-          background-color: white;
-          padding: 30px;
-          border-radius: 10px;
-          text-align: center;
-          max-width: 80%;
-      }
-      
-      .message-box h2 {
-          margin-bottom: 20px;
-          color: #1e3c72;
-      }
-      
-      .message-box button {
-          margin-top: 20px;
-          padding: 10px 20px;
-          background-color: #1e3c72;
-          color: white;
-          border: none;
-          border-radius: 5px;
-          cursor: pointer;
-          font-size: 16px;
-      }
-      
-      .trial-transition {
-          animation: fadeInOut 1s ease-in-out;
-      }
-      
-      .vehicle-display {
-          position: absolute;
-          top: 40px;
-          right: 40px;
-          width: 200px;
-          height: 200px;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          background-color: #f8f8f8;
-          border: 2px solid #ccc;
-          border-radius: 10px;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-          flex-shrink: 0; /* prevent shrinking */
-          margin-top: 20px;
-      }
-
-      .grid-wrapper {
-          flex-shring: 0;
-      }
-      
-      @keyframes fadeInOut {
-          0% { opacity: 0; }
-          50% { opacity: 1; }
-          100% { opacity: 0; }
-      }
-  `;
-  
-  // Add the style to the document head
-  document.head.appendChild(styleEl);
+          <div id="controls-info">
+            <div id="movement-instructions"></div>
+            <div id="planning-controls" style="display: none;">
+              <p><strong>plan your moves!</strong> Enter your move sequence below:</p>
+              <div class="planning-input">
+                <input type="text" id="move-sequence" placeholder="e.g. uujjzx">
+                <button id="submit-plan">Submit</button>
+              </div>
+            </div>
+          </div>
+        </div>
+    `;
 }
 
 // Setup keyboard event listeners
 function setupKeyboardListeners() {
   document.addEventListener('keydown', function(event) {
       // Only handle key presses during the active learning phase
-      if (currentPhase !== 1) return;
+      if (!inputEnabled || currentPhase !== 1) return;
       
       const key = event.key.toLowerCase();
       console.log("Key pressed:", key);
@@ -617,214 +442,6 @@ function renderGrid() {
 * @param {string} color - color code
 * @returns {HTMLElement} - SVG element
 */
-function createTruckSVG(size, color) {
-  const sizeFactor = size === 'small' ? 0.7 : 0.9;
-  
-  const svgNS = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(svgNS, "svg");
-  svg.setAttribute("width", "100%");
-  svg.setAttribute("height", "100%");
-  svg.setAttribute("viewBox", "0 0 100 100");
-  svg.style.position = "absolute";
-  svg.style.top = "0";
-  svg.style.left = "0";
-  svg.style.width = (sizeFactor * 100) + "%";
-  svg.style.height = (sizeFactor * 100) + "%";
-  svg.style.margin = ((1 - sizeFactor) * 50) + "%";
-  
-  // Truck cargo (back) with 3D effect
-  const cargoSide = document.createElementNS(svgNS, "rect");
-  cargoSide.setAttribute("x", "5");
-  cargoSide.setAttribute("y", "25");
-  cargoSide.setAttribute("width", "45");
-  cargoSide.setAttribute("height", "40");
-  cargoSide.setAttribute("rx", "3");
-  cargoSide.setAttribute("ry", "3");
-  cargoSide.setAttribute("fill", color);
-  cargoSide.setAttribute("stroke", "#000");
-  cargoSide.setAttribute("stroke-width", "2");
-  
-  // Cargo top - darker shade for 3D effect
-  const cargoTop = document.createElementNS(svgNS, "rect");
-  cargoTop.setAttribute("x", "5");
-  cargoTop.setAttribute("y", "20");
-  cargoTop.setAttribute("width", "45");
-  cargoTop.setAttribute("height", "5");
-  cargoTop.setAttribute("rx", "1");
-  cargoTop.setAttribute("ry", "1");
-  // Darken the color for the top
-  const darkerColor = adjustColor(color, -30);
-  cargoTop.setAttribute("fill", darkerColor);
-  cargoTop.setAttribute("stroke", "#000");
-  cargoTop.setAttribute("stroke-width", "1");
-  
-  // Truck cab (front) with more detail
-  const cab = document.createElementNS(svgNS, "rect");
-  cab.setAttribute("x", "50");
-  cab.setAttribute("y", "32");
-  cab.setAttribute("width", size === 'big' ? "40" : "35");
-  cab.setAttribute("height", size === 'big' ? "33" : "30");
-  cab.setAttribute("rx", "5");
-  cab.setAttribute("ry", "5");
-  cab.setAttribute("fill", color);
-  cab.setAttribute("stroke", "#000");
-  cab.setAttribute("stroke-width", "2");
-  
-  // Cab roof with curve for big truck
-  const cabRoof = document.createElementNS(svgNS, "path");
-  if (size === 'big') {
-    cabRoof.setAttribute("d", "M50,32 C50,25 85,25 90,32");
-    cabRoof.setAttribute("fill", darkerColor);
-    cabRoof.setAttribute("stroke", "#000");
-    cabRoof.setAttribute("stroke-width", "1");
-  }
-  
-  // Front windshield
-  const windshield = document.createElementNS(svgNS, "path");
-  if (size === 'big') {
-    windshield.setAttribute("d", "M55,32 C55,27 80,27 85,32");
-  } else {
-    windshield.setAttribute("d", "M55,32 C55,28 75,28 80,32");
-  }
-  windshield.setAttribute("fill", "#B3E5FC");
-  windshield.setAttribute("stroke", "#000");
-  windshield.setAttribute("stroke-width", "1");
-  
-  // Side window
-  const sideWindow = document.createElementNS(svgNS, "rect");
-  sideWindow.setAttribute("x", "60");
-  sideWindow.setAttribute("y", size === 'big' ? "35" : "37");
-  sideWindow.setAttribute("width", size === 'big' ? "25" : "20");
-  sideWindow.setAttribute("height", size === 'big' ? "12" : "10");
-  sideWindow.setAttribute("rx", "2");
-  sideWindow.setAttribute("ry", "2");
-  sideWindow.setAttribute("fill", "#B3E5FC");
-  sideWindow.setAttribute("stroke", "#000");
-  sideWindow.setAttribute("stroke-width", "1");
-  
-  // Enhanced wheels with more detail
-  const frontWheel = document.createElementNS(svgNS, "g");
-  const frontWheelOuter = document.createElementNS(svgNS, "circle");
-  frontWheelOuter.setAttribute("cx", size === 'big' ? "75" : "70");
-  frontWheelOuter.setAttribute("cy", "70");
-  frontWheelOuter.setAttribute("r", size === 'big' ? "11" : "8");
-  frontWheelOuter.setAttribute("fill", "#333");
-  
-  const frontWheelInner = document.createElementNS(svgNS, "circle");
-  frontWheelInner.setAttribute("cx", size === 'big' ? "75" : "70");
-  frontWheelInner.setAttribute("cy", "70");
-  frontWheelInner.setAttribute("r", size === 'big' ? "5" : "3");
-  frontWheelInner.setAttribute("fill", "#999");
-  
-  frontWheel.appendChild(frontWheelOuter);
-  frontWheel.appendChild(frontWheelInner);
-  
-  const middleWheel = document.createElementNS(svgNS, "g");
-  const middleWheelOuter = document.createElementNS(svgNS, "circle");
-  middleWheelOuter.setAttribute("cx", "40");
-  middleWheelOuter.setAttribute("cy", "70");
-  middleWheelOuter.setAttribute("r", size === 'big' ? "11" : "8");
-  middleWheelOuter.setAttribute("fill", "#333");
-  
-  const middleWheelInner = document.createElementNS(svgNS, "circle");
-  middleWheelInner.setAttribute("cx", "40");
-  middleWheelInner.setAttribute("cy", "70");
-  middleWheelInner.setAttribute("r", size === 'big' ? "5" : "3");
-  middleWheelInner.setAttribute("fill", "#999");
-  
-  middleWheel.appendChild(middleWheelOuter);
-  middleWheel.appendChild(middleWheelInner);
-  
-  const rearWheel = document.createElementNS(svgNS, "g");
-  const rearWheelOuter = document.createElementNS(svgNS, "circle");
-  rearWheelOuter.setAttribute("cx", "15");
-  rearWheelOuter.setAttribute("cy", "70");
-  rearWheelOuter.setAttribute("r", size === 'big' ? "11" : "8");
-  rearWheelOuter.setAttribute("fill", "#333");
-  
-  const rearWheelInner = document.createElementNS(svgNS, "circle");
-  rearWheelInner.setAttribute("cx", "15");
-  rearWheelInner.setAttribute("cy", "70");
-  rearWheelInner.setAttribute("r", size === 'big' ? "5" : "3");
-  rearWheelInner.setAttribute("fill", "#999");
-  
-  rearWheel.appendChild(rearWheelOuter);
-  rearWheel.appendChild(rearWheelInner);
-  
-  // Headlights and taillights
-  const headlight = document.createElementNS(svgNS, "circle");
-  headlight.setAttribute("cx", size === 'big' ? "88" : "83");
-  headlight.setAttribute("cy", "40");
-  headlight.setAttribute("r", "3");
-  headlight.setAttribute("fill", "#FFFF99");
-  headlight.setAttribute("stroke", "#000");
-  headlight.setAttribute("stroke-width", "1");
-  
-  const taillight = document.createElementNS(svgNS, "rect");
-  taillight.setAttribute("x", "7");
-  taillight.setAttribute("y", "35");
-  taillight.setAttribute("width", "3");
-  taillight.setAttribute("height", "8");
-  taillight.setAttribute("rx", "1");
-  taillight.setAttribute("ry", "1");
-  taillight.setAttribute("fill", "#FF3333");
-  taillight.setAttribute("stroke", "#000");
-  taillight.setAttribute("stroke-width", "1");
-  
-  // Special details for the big truck
-  if (size === 'big') {
-    // Truck grill
-    const grill = document.createElementNS(svgNS, "rect");
-    grill.setAttribute("x", "85");
-    grill.setAttribute("y", "38");
-    grill.setAttribute("width", "5");
-    grill.setAttribute("height", "12");
-    grill.setAttribute("fill", "#DDDDDD");
-    grill.setAttribute("stroke", "#000");
-    grill.setAttribute("stroke-width", "1");
-    
-    // Exhaust stack
-    const exhaust = document.createElementNS(svgNS, "rect");
-    exhaust.setAttribute("x", "52");
-    exhaust.setAttribute("y", "15");
-    exhaust.setAttribute("width", "3");
-    exhaust.setAttribute("height", "17");
-    exhaust.setAttribute("fill", "#777777");
-    exhaust.setAttribute("stroke", "#000");
-    exhaust.setAttribute("stroke-width", "1");
-    
-    svg.appendChild(exhaust);
-    svg.appendChild(grill);
-  }
-  
-  // Connection between cab and cargo
-  const connection = document.createElementNS(svgNS, "rect");
-  connection.setAttribute("x", "49");
-  connection.setAttribute("y", size === 'big' ? "40" : "43");
-  connection.setAttribute("width", "3");
-  connection.setAttribute("height", "10");
-  connection.setAttribute("fill", "#555555");
-  connection.setAttribute("stroke", "#000");
-  connection.setAttribute("stroke-width", "1");
-  
-  // Append all elements to SVG
-  svg.appendChild(cargoSide);
-  svg.appendChild(cargoTop);
-  svg.appendChild(connection);
-  svg.appendChild(cab);
-  if (size === 'big') {
-    svg.appendChild(cabRoof);
-  }
-  svg.appendChild(windshield);
-  svg.appendChild(sideWindow);
-  svg.appendChild(rearWheel);
-  svg.appendChild(middleWheel);
-  svg.appendChild(frontWheel);
-  svg.appendChild(headlight);
-  svg.appendChild(taillight);
-  
-  return svg;
-}
 
 /**
  * Helper function to adjust a color's brightness
@@ -856,16 +473,39 @@ function adjustColor(color, amount) {
 // Update vehicle info display
 function updateVehicleInfo() {
   // Only display the controls info, no vehicle type info
-  const controlsInfoEl = document.getElementById('controls-info');
+  const movementInstructionsEl = document.getElementById('movement-instructions');
+  const planningControlsEl = document.getElementById('planning-controls');
   
-  // Update controls info
-  controlsInfoEl.innerHTML = `
-      <p>Up: ${currentVehicle.keys.up.toUpperCase()} | 
-         Down: ${currentVehicle.keys.down.toUpperCase()} | 
-         Left: ${currentVehicle.keys.left.toUpperCase()} | 
-         Right: ${currentVehicle.keys.right.toUpperCase()}</p>
-  `;
+  if (!movementInstructionsEl || !planningControlsEl) {
+      console.error("Required elements not found!");
+      return;
+  }
+  
+  if (currentPhase === 1) {
+    // Phase 1 (learning) - show movement instructions
+    movementInstructionsEl.innerHTML = `
+      <p style="margin: 0; font-size: 18px; font-weight: bold; color: #020814;">
+      Up: ${currentVehicle.keys.up.toUpperCase()} | 
+      Down: ${currentVehicle.keys.down.toUpperCase()} | 
+      Left: ${currentVehicle.keys.left.toUpperCase()} | 
+      Right: ${currentVehicle.keys.right.toUpperCase()}
+    </p>`;
+    movementInstructionsEl.style.display = 'block';
+    planningControlsEl.style.display = 'none';
+  
+  } else if (currentPhase === 2) {
+    // Phase 2 (planning) - hide movement, show planning input
+    movementInstructionsEl.style.display = 'none';
+    planningControlsEl.style.display = 'block';
+  
+    const submitButton = document.getElementById('submit-plan');
+    if (submitButton && !submitButton.listenerAdded) {
+      submitButton.addEventListener('click', submitPlan);
+      submitButton.listenerAdded = true; // Prevent multiple listeners
+    }
+  }
 }
+  
 
 // Start trial timer and record initial data
 
@@ -1015,6 +655,7 @@ function endTrial() {
 
 // Show results of current trial and transition to next
 function showTrialResults() {
+  inputEnabled = false;
   // Create fade overlay
   const fadeOverlay = document.createElement('div');
   fadeOverlay.className = 'fade-overlay';
@@ -1034,38 +675,12 @@ function showTrialResults() {
       // remove overlay after fadeout ends
       setTimeout(() => {
         fadeOverlay.remove();
+        inputEnabled = true;
       }, 500);
     } ,100);
   }, 500);
 }
   
-  overlay.innerHTML = `
-      <div class="message-box">
-          <button id="next-trial-btn">NEXT</button>
-      </div>
-  `;
-  
-  document.querySelector('.game-container').appendChild(overlay);
-  
-  // Use a more explicit event handler attachment with a named function
-  function continueClickHandler() {
-    console.log("Next button clicked");
-    // Remove event listener to prevent multiple calls
-    this.removeEventListener('click', continueClickHandler);
-    // Continue to next trial
-    continueToNextTrial();
-  }
-
-  // Add event listener to next trial button
-  const nextButton = document.getElementById('next-trial-btn');
-  if (nextButton) {
-    console.log("Adding click event listener to next button");
-    nextButton.addEventListener('click', continueClickHandler);
-  } else {
-    console.error("Next trial button not found!");
-  }
-
-
 // Continue to the next trial or phase
 function continueToNextTrial() {
   // Remove the overlay
@@ -1087,110 +702,45 @@ function continueToNextTrial() {
       // Start next trial
       currentTrial++;
       console.log(`Moving to trial ${currentTrial}`);
-
-      // only show instuctions if its trial #1
-      if (currentTrial === 1) {
-        showTrialInstructions();
-      } else {
-        createTrial();
+      createTrial();
       }
   }
-}
 
 // Start the planning phase (Phase 2)
 function startPlanningPhase() {
   currentPhase = 2;
   currentTrial = 1;
-  
-  // Show phase transition message
-  showPhaseTransition();
-}
 
-// Show phase transition message
-function showPhaseTransition() {
-  // Create phase transition overlay
-  const overlay = document.createElement('div');
-  overlay.className = 'message-overlay';
-  
-  overlay.innerHTML = `
-      <div class="message-box">
-          <h2>Phase 1 Complete!</h2>
-          <p>Now moving to Phase 2: Planning</p>
-          <p>In this phase, you will plan your moves in advance without seeing the results.</p>
-          <button id="start-phase2-btn">Begin Phase 2</button>
-      </div>
-  `;
-  
-  document.querySelector('.game-container').appendChild(overlay);
-  
-  // Add event listener to start phase 2 button
-  const startPhase2Button = document.getElementById('start-phase2-btn');
-  startPhase2Button.addEventListener('click', function startPhase2Handler() {
-      console.log("Starting Phase 2 preparation...");
-      overlay.remove();
+  console.log("starting planning phase"); 
+
+  // hiding score bar
+  const headerBar = document.querySelector('.header-bar');
+  if (headerBar) {
+    headerBar.style.display = 'none';
+  }
+ 
+  // Convert grid to planning mode
+  convertToPlanningMode();
       
-      // Convert grid to planning mode
-      convertToPlanningMode();
+  // Reset game data for phase 2
+  gameData.phase2 = [];
       
-      // Reset game data for phase 2
-      gameData.phase2 = [];
-      
-      // Show instructions for first planning trial
-      showPlanningInstructions();
-  });
-}
+  // Show instructions for first planning trial
+  showPlanningInstructions();
+  };
+
 
 // Show planning phase instructions
 function showPlanningInstructions() {
-  // Create instruction overlay
-  const overlay = document.createElement('div');
-  overlay.className = 'message-overlay';
-  
-  overlay.innerHTML = `
-      <div class="message-box">
-          <h2>Planning Phase</h2>
-          <p>Enter a sequence of keys to navigate to rewards.</p>
-          <p>You won't see the results until you submit your plan.</p>
-          <button id="start-planning-btn">Start Planning</button>
-      </div>
-  `;
-  
-  document.querySelector('.game-container').appendChild(overlay);
-  
-  // Add event listener to start planning button
-  const startButton = document.getElementById('start-planning-btn');
-  startButton.addEventListener('click', function startPlanningHandler() {
-      overlay.remove();
-      createPlanningTrial();
-  });
+    console.log("showing planning instructions");
+    createPlanningTrial();
 }
 
 // Convert the grid to planning mode
 function convertToPlanningMode() {
-  console.log("Converting to planning mode...");
+  console.log("Converting to planning mode");
   
-  // Add planning-specific UI elements
-  const controlsContainer = document.querySelector('.controls-container');
-  
-  // First check if planning controls already exist
-  if (!document.getElementById('planning-controls')) {
-      controlsContainer.innerHTML += `
-          <div id="planning-controls">
-              <p>Enter move sequence:</p>
-              <input type="text" id="move-sequence" placeholder="e.g. uujjzx">
-              <button id="submit-plan">Submit</button>
-          </div>
-      `;
-      
-      // Add event listener for submit button
-      const submitButton = document.getElementById('submit-plan');
-      if (submitButton) {
-          submitButton.addEventListener('click', submitPlan);
-          console.log("Submit plan button event listener added");
-      } else {
-          console.error("Submit plan button not found!");
-      }
-  }
+  updateVehicleInfo();
 }
 
 // Create a planning trial
