@@ -2,7 +2,7 @@
 // Game Configuration
 const GRID_SIZE = 4;
 const LEARNING_TRIALS = 4;
-const PLANNING_TRIALS = 20;
+const PLANNING_TRIALS = 10;
 const NEW_SIZE_TRIALS = 10;
 
 // Vehicle types and controls
