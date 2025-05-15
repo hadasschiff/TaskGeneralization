@@ -1,4 +1,6 @@
 /* Styling of the game. */
+
+
 * {
     margin: 0;
     padding: 0;
@@ -10,9 +12,9 @@ body {
     background-color: white;
     display: flex;
     justify-content: center;
-    align-items: center;
-    height: 100vh;
-    overflow: hidden;
+    align-items: flex-start;
+    min-height: 100vh;
+    overflow: auto;
 }
 
 .game-container {
@@ -52,6 +54,7 @@ input[type="text"] {
 }
 
 .header-bar {
+    flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -65,13 +68,14 @@ input[type="text"] {
 }
 
 .game-grid-outer-container {
-    position: relative;
-    width: 100%;
     display: flex;
+    width: 100%;
+    flex: 1 0 auto;
     justify-content: center;
     align-items: flex-start;
+    position: relative;
+    margin-left: auto;
     padding: 20px;
-    gap: 30px;
 }
 
 .game-grid-inner-container {
@@ -87,8 +91,8 @@ input[type="text"] {
     grid-template-columns: repeat(var(--grid-size), 1fr);
     grid-template-rows: repeat(var(--grid-size), 1fr);
     gap: 2px;
-    width: 590px;
-    height: 540px;
+    width: min(90vw, 540px);
+    height: min(90vw, 540px);
     background-color: #eee;
     flex-shrink: 0;
 }
@@ -99,7 +103,7 @@ input[type="text"] {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 24px;
+    font-size: calc(1.5rem + 1vw);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -136,7 +140,7 @@ input[type="text"] {
 .controls-container {
     position: relative;
     width: 100%;
-    padding: 0;
+    padding: 3px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -201,18 +205,22 @@ input[type="text"] {
 }
 
 .vehicle-display {
+
+    width: 20vw;
+    height: 20vw;
+    max-width: 200px;
+    max-height: 200px;
     position: absolute;
-    top: 20px;
-    right: 20px;
-    width: 200px;
-    height: 200px;
+    right: 10px;
+    top: 10px;
+    /* margin-left: auto; */
     display: flex;
     justify-content: center;
-    align-items: center;
     background-color: #f8f8f8;
     border: 2px solid #ccc;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+
 }
 
 .grid-wrapper {

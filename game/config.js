@@ -14,17 +14,10 @@ const VEHICLE_TYPES = {
 };
 
 // Color palettes for vehicle types
-const COLOR_PALETTES = {
-  car: [
+const COLOR_PALETTE = [
       '#FF5733', '#FF8C33', '#FFC133', '#FFFF33', '#C1FF33', 
-      '#8CFF33', '#57FF33', '#33FF33', '#33FF57', '#33FF8C', 
+      '#8CFF33', '#57FF33', '#33FF8C', '#FF3366', '#FF99CC',
       '#33FFC1', '#33FFFF', '#33C1FF', '#338CFF', '#3357FF', 
-      '#3333FF', '#5733FF', '#8C33FF', '#C133FF', '#FF33FF'
-  ],
-  truck: [
-      '#FF3366', '#FF6699', '#FF99CC', '#FFCCFF', '#CC99FF', 
-      '#9966FF', '#6633FF', '#3300FF', '#0033FF', '#0066FF', 
-      '#0099FF', '#00CCFF', '#00FFFF', '#00FFCC', '#00FF99', 
-      '#00FF66', '#00FF33', '#33FF00', '#66FF00', '#99FF00'
+      '#5733FF', '#8C33FF', '#C133FF', '#CC99FF', '#FF33FF'
   ]
-};
+;
