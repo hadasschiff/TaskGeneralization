@@ -54,28 +54,48 @@ input[type="text"] {
 }
 
 .header-bar {
-    flex-shrink: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 14px;
-    padding: 0;
+    /* flex-shrink: 0; */
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    justify-content: center;
+    /* justify-content: flex-start; */
+    /* align-items: flex-start; */
+    align-items: center; 
+    height: 7%;
+    padding: 16px;
+    margin-bottom: 16px;
     background-color: #1e3c72;
     color: white;
     font-weight: bold;
     font-size: 16px;
-    border-bottom: none;
+    /* border-bottom: none; */
+    display: flex;
 }
+
+.score-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 40px;
+    font-size: 18px;
+    color: white;
+    font-weight: bold;
+    line-height: 1;
+}
+
+
 
 .game-grid-outer-container {
     display: flex;
     width: 100%;
     flex: 1 0 auto;
     justify-content: center;
-    align-items: flex-start;
+    align-items: center;
+    padding-top: 20px;
     position: relative;
     margin-left: auto;
-    padding: 20px;
 }
 
 .game-grid-inner-container {
@@ -92,7 +112,7 @@ input[type="text"] {
     grid-template-rows: repeat(var(--grid-size), 1fr);
     gap: 2px;
     width: min(90vw, 540px);
-    height: min(90vw, 540px);
+    height: min(90vw, 520px);
     background-color: #eee;
     flex-shrink: 0;
 }
@@ -202,6 +222,10 @@ input[type="text"] {
 
 .trial-transition {
     animation: fadeInOut 1s ease-in-out;
+}
+
+.score {
+    width: 150px;
 }
 
 .vehicle-display {

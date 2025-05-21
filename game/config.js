@@ -1,6 +1,6 @@
 // Vehicle Navigation Game - Main game functionality and logic
 // Game Configuration
-const GRID_SIZE = 4;
+const GRID_SIZE = 3;
 const LEARNING_TRIALS = 4;
 const PLANNING_TRIALS = 10;
 const NEW_SIZE_TRIALS = 10;

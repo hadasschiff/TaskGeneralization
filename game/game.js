@@ -182,10 +182,15 @@ function createGameUI() {
   // Create game UI structure
   container.innerHTML = `
       <div class="header-bar">
-          <div class="score">Score: <span id="score">0</span></div>
-      </div>
+          <div class="score-group">
+              <div class="score">Score: <span id="score">0</span></div>
+            <div class="score">✅ Successes: <span id="success-count">0</span></div>
+            <div class="score">❌ Failures: <span id="failure-count">0</span></div>
+          </div>
+      </div> 
       
       <div class="game-grid-outer-container">
+
           <div class="game-grid-inner-container">
               <div id="game-grid"></div>
           </div>
@@ -342,34 +347,92 @@ function resetGrid() {
 
 // Place obstacles and rewards in the grid
 function placeObstaclesAndRewards() {
-  // Place obstacles (8)
-  for (let i = 0; i < 8; i++) {
-      let x, y;
-      do {
-          x = Math.floor(Math.random() * GRID_SIZE);
-          y = Math.floor(Math.random() * GRID_SIZE);
-      } while ((x === currentVehicle.x && y === currentVehicle.y) || 
-               obstacles.some(obs => obs.x === x && obs.y === y) ||
-               rewards.some(rew => rew.x === x && rew.y === y));
-      
-      obstacles.push({ x, y });
-      gridWorld[y][x] = 'obstacle';
+  gridWorld = [];
+  for (let y = 0; y < GRID_SIZE; y++) {
+      gridWorld[y] = [];
+      for (let x = 0; x < GRID_SIZE; x++) {
+          gridWorld[y][x] = 'empty';
+      }
   }
-  
-  // Place rewards (4)
-  for (let i = 0; i < 4; i++) {
-      let x, y;
-      do {
-          x = Math.floor(Math.random() * GRID_SIZE);
-          y = Math.floor(Math.random() * GRID_SIZE);
-      } while ((x === currentVehicle.x && y === currentVehicle.y) || 
-               obstacles.some(obs => obs.x === x && obs.y === y) ||
-               rewards.some(rew => rew.x === x && rew.y === y));
-      
+
+  rewards = [];
+  obstacles = [];
+
+  // Define valid movement directions
+  const directions = [
+      { dx: 0, dy: -1 },  // up
+      { dx: 0, dy: 1 },   // down
+      { dx: -1, dy: 0 },  // left
+      { dx: 1, dy: 0 }    // right
+  ];
+
+  let path = [];
+
+  // Try generating a valid 4-step reward path
+  let attempts = 0;
+  while (path.length < 5 && attempts < 100) {
+      attempts++;
+      path = [];
+
+      // Random starting point
+      let x = Math.floor(Math.random() * GRID_SIZE);
+      let y = Math.floor(Math.random() * GRID_SIZE);
+
+      path.push({ x, y });
+      let used = new Set([`${x},${y}`]);
+
+      for (let step = 0; step < 4; step++) {
+          // Get valid directions from current cell
+          const validNextSteps = directions
+              .map(d => ({ x: x + d.dx, y: y + d.dy }))
+              .filter(p =>
+                  p.x >= 0 && p.x < GRID_SIZE &&
+                  p.y >= 0 && p.y < GRID_SIZE &&
+                  !used.has(`${p.x},${p.y}`)
+              );
+
+          if (validNextSteps.length === 0) break;
+
+          const next = validNextSteps[Math.floor(Math.random() * validNextSteps.length)];
+          x = next.x;
+          y = next.y;
+          path.push({ x, y });
+          used.add(`${x},${y}`);
+      }
+  }
+
+  if (path.length < 5) {
+      console.error("Failed to generate 4-step reward path");
+      return;
+  }
+
+  // Set vehicle start position to path[0]
+  currentVehicle.x = path[0].x;
+  currentVehicle.y = path[0].y;
+
+  // Place rewards at path[1] to path[4]
+  for (let i = 1; i < path.length; i++) {
+      const { x, y } = path[i];
       rewards.push({ x, y });
       gridWorld[y][x] = 'reward';
   }
+
+  // Place obstacles (3), avoiding all path positions
+  let obstacleAttempts = 0;
+  while (obstacles.length < 3 && obstacleAttempts < 100) {
+      obstacleAttempts++;
+      let ox = Math.floor(Math.random() * GRID_SIZE);
+      let oy = Math.floor(Math.random() * GRID_SIZE);
+
+      if (path.some(p => p.x === ox && p.y === oy)) continue;
+
+      if (!obstacles.some(o => o.x === ox && o.y === oy)) {
+          obstacles.push({ x: ox, y: oy });
+          gridWorld[oy][ox] = 'obstacle';
+      }
+  }
 }
+
 
 // Render the grid based on current state
 function renderGrid() {
@@ -627,6 +690,9 @@ function checkCollisions() {
       
       // Decrease score
       score -= 10;
+      let failCount = parseInt(document.getElementById('failure-count').textContent, 10);
+      document.getElementById('failure-count').textContent = failCount + 1;
+
       document.getElementById('score').textContent = score;
       
       // Record obstacle hit
@@ -649,6 +715,9 @@ function checkCollisions() {
       
       // Increase score
       score += 10;
+      let successCount = parseInt(document.getElementById('success-count').textContent, 10);
+      document.getElementById('success-count').textContent = successCount + 1;
+
       document.getElementById('score').textContent = score;
       
       // Record reward collection
