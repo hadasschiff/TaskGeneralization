@@ -31,6 +31,7 @@ function endGame() {
       <div class="completion-screen">
           <h1>Game Complete!</h1>
           <p>Thank you for participating.</p>
+          <p>Due to technical difficulties, you will not need to take part in the public speaking task.</p>
       </div>
   `;
   
@@ -262,14 +263,46 @@ function showTrialInstructions() {
   
   // header text
   overlay.innerHTML = `
-      <div class="message-box">
-          <h2>Instructions</h2>
-          <p>Navigate the vehicle using the keyboard controls.</p>
-          <p>Collect rewards (💰) and avoid obstacles (🔥).</p>
-          <button id="start-trial-btn">Start</button>
-      </div>
-  `;
-  
+  <div class="message-box">
+    <h2 style="color: #1e3c72; margin-bottom: 16px;">Instructions</h2>
+
+    <p style="margin-bottom: 16px;">
+      In this task, you will navigate a vehicle through different mazes. Use the keyboard to move the vehicle around the grid.
+    </p>
+
+    <p style="margin-bottom: 16px;">
+      Your goal is to collect as many <strong style="color: green;">rewards (💰)</strong> as possible while avoiding <strong style="color: red;">obstacles (🔥)</strong>.
+    </p>
+
+    <div style="background: #f5f5f5; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
+      <p style="font-weight: bold; margin-bottom: 8px;">A few trials will be <strong style="color: #1e3c72;">randomly selected</strong>. These trials will determine:</p>
+
+      <ul style="list-style: none; padding-left: 0; margin: 0;">
+        <li style="margin-bottom: 8px;">
+
+          <strong>Your bonus payment</strong> — based on the number of <span style="color: green;">rewards (💰)</span> you collected.
+        </li>
+        <li>
+
+          <strong>Your time in the public speaking task</strong> — based on the number of <span style="color: red;">obstacles (🔥)</span>. You'll read from a teleprompter while a live audience gives feedback in a chat. They will rate your performance and confidence.
+        </li>
+      </ul>
+    </div>
+
+    <p style="font-weight: bold; margin-bottom: 12px;">
+      Every trial counts. Try your best on each trial — you won’t know which ones will determine your outcomes!
+    </p>
+
+    <p style="margin-bottom: 20px;">
+      Learn how each vehicle behaves in the mazes. This will help you perform better in later stages.
+    </p>
+
+    <button id="start-trial-btn" style="background-color: #1e3c72; color: white; padding: 12px 24px; font-size: 18px; border: none; border-radius: 6px; cursor: pointer;">
+      Start
+    </button>
+  </div>
+`;
+
   document.querySelector('.game-container').appendChild(overlay);
   
   // Add event listener to start trial button
@@ -590,10 +623,23 @@ function updateVehicleInfo() {
     planningControlsEl.style.display = 'block';
   
     const submitButton = document.getElementById('submit-plan');
-    if (submitButton && !submitButton.listenerAdded) {
-      submitButton.addEventListener('click', submitPlan);
-      submitButton.listenerAdded = true; // Prevent multiple listeners
+const moveSequenceInput = document.getElementById('move-sequence');
+
+if (submitButton && !submitButton.listenerAdded) {
+  submitButton.addEventListener('click', submitPlan);
+  submitButton.listenerAdded = true; // Prevent multiple listeners
+}
+
+if (moveSequenceInput && !moveSequenceInput.listenerAdded) {
+  moveSequenceInput.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      submitPlan();
     }
+  });
+  moveSequenceInput.listenerAdded = true; // Prevent multiple listeners
+}
+
   }
 }
   
@@ -829,9 +875,58 @@ function startPlanningPhase() {
 
 // Show planning phase instructions
 function showPlanningInstructions() {
-    console.log("showing planning instructions");
-    createPlanningTrial();
+  const overlay = document.createElement('div');
+  overlay.className = 'message-overlay';
+
+  overlay.innerHTML = `
+  <div class="message-box">
+      <h2 style="color: #1e3c72; margin-bottom: 16px;">Instructions</h2>
+
+      <p style="margin-bottom: 16px;">
+          Now, it's time to use what you've learned! In this phase, you will <strong>plan your moves in advance</strong> to collect as many rewards (💰) as possible while avoiding obstacles (🔥).
+      </p>
+
+      <p style="margin-bottom: 16px;">
+          You will <strong>not see feedback</strong> while planning. You'll enter a sequence of <strong>4 moves</strong>, and the game will execute them all at once. You will not see how your vehicle moves.
+      </p>
+
+      <p style="background: #f5f5f5; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
+          Just like before, a few trials will be <strong style="color: #1e3c72;">randomly selected</strong> to determine:
+          <ul style="list-style: none; padding-left: 0; margin: 0;">
+              <li style="margin-bottom: 8px;">
+                  
+                  <strong>Your bonus payment</strong> — based on rewards (💰) collected.
+              </li>
+              <li>
+                  
+                  <strong>Your time in the public speaking task</strong> — based on failures (🔥). You will read from a teleprompter while a live audience gives feedback in a real-time chat. They will rate your performance and confidence.
+              </li>
+          </ul>
+      </p>
+
+      <p style="font-weight: bold; margin-bottom: 12px;">
+          Every trial counts. Plan carefully and think about what you learned from the earlier mazes.
+      </p>
+
+      <p style="margin-bottom: 20px;">
+          Good luck! When you're ready, click below to begin.
+      </p>
+
+      <button id="start-trial-btn" style="background-color: #1e3c72; color: white; padding: 12px 24px; font-size: 18px; border: none; border-radius: 6px; cursor: pointer;">
+          Start
+      </button>
+  </div>
+  `;
+
+  document.querySelector('.game-container').appendChild(overlay);
+
+  const startButton = document.getElementById('start-trial-btn');
+  startButton.addEventListener('click', function() {
+      overlay.remove();
+      createPlanningTrial();
+  });
 }
+
 
 // Convert the grid to planning mode
 function convertToPlanningMode() {
