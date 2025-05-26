@@ -30,8 +30,8 @@ function endGame() {
   container.innerHTML = `
       <div class="completion-screen">
           <h1>Game Complete!</h1>
-          <p>Thank you for participating.</p>
-          <p>Due to technical difficulties, you will not need to take part in the public speaking task.</p>
+          <p style="font-size: 24px;">Thank you for participating.</p>
+          <p style="font-size: 24px;">Due to technical difficulties, you will not need to take part in the public speaking task.</p>
       </div>
   `;
   
@@ -157,6 +157,14 @@ function initializeGame() {
   container.style.backgroundColor = 'white';
   document.documentElement.style.setProperty('--grid-size', GRID_SIZE);
 
+  // Create and add the wrong key alert element
+  const wrongKeyAlert = document.createElement('div');
+  wrongKeyAlert.id = 'wrong-key-alert';
+  wrongKeyAlert.textContent = 'Wrong Key!';
+  wrongKeyAlert.classList.add('wrong-key-alert');
+  wrongKeyAlert.style.display = 'none'; // Hide by default
+  document.body.appendChild(wrongKeyAlert);
+
   // Replace the opening slide with the game UI
   createGameUI();
   const link = document.createElement('link');
@@ -235,6 +243,9 @@ function setupKeyboardListeners() {
       } else if (key === currentVehicle.keys.right) {
           console.log("Moving right");
           moveVehicle('right');
+      } else {
+        //wrong key presed
+        showWrongKeyAlert();
       }
   });
 }
@@ -263,7 +274,7 @@ function showTrialInstructions() {
   
   // header text
   overlay.innerHTML = `
-  <div class="message-box">
+  <div class="message-box" style="font-family: 'Segoe UI', sans-serif; font-size: 17px; color: #333; line-height: 1.6; margin: 0 auto;">
     <h2 style="color: #1e3c72; margin-bottom: 16px;">Instructions</h2>
 
     <p style="margin-bottom: 16px;">
@@ -274,8 +285,8 @@ function showTrialInstructions() {
       Your goal is to collect as many <strong style="color: green;">rewards (💰)</strong> as possible while avoiding <strong style="color: red;">obstacles (🔥)</strong>.
     </p>
 
-    <div style="background: #f5f5f5; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
-      <p style="font-weight: bold; margin-bottom: 8px;">A few trials will be <strong style="color: #1e3c72;">randomly selected</strong>. These trials will determine:</p>
+    <div style="background: #f5f5f5; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-family: 'Segoe UI', sans-serif; font-size: 18px;">
+      <p style= margin-bottom: 8px;">A few trials will be <strong style="color: #1e3c72;">randomly selected</strong>. These trials will determine:</p>
 
       <ul style="list-style: none; padding-left: 0; margin: 0;">
         <li style="margin-bottom: 8px;">
@@ -289,8 +300,8 @@ function showTrialInstructions() {
       </ul>
     </div>
 
-    <p style="font-weight: bold; margin-bottom: 12px;">
-      Every trial counts. Try your best on each trial — you won’t know which ones will determine your outcomes!
+    <p style= margin-bottom: 12px;">
+      <strong>Every trial counts.</strong> Try your best on each trial — you won’t know which ones will determine your outcomes!
     </p>
 
     <p style="margin-bottom: 20px;">
@@ -315,6 +326,13 @@ function showTrialInstructions() {
 
 // Create a new trial with a specific vehicle and grid
 function createTrial() {
+  // Reset score for the new trial
+  if (currentPhase === 1) {
+    score = 0;
+    document.getElementById('score').textContent = score;
+    document.getElementById('success-count').textContent = 0;
+    document.getElementById('failure-count').textContent = 0;
+  }
   // Select vehicle type based on trial number to ensure equal distribution
   const vehicleTypeIndex = (currentTrial - 1) % 4;
   const vehicleTypes = Object.values(VEHICLE_TYPES);
@@ -593,6 +611,23 @@ function adjustColor(color, amount) {
   // Convert back to hex
   return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
+
+function showWrongKeyAlert() {
+  const wrongKeyAlert = document.getElementById('wrong-key-alert');
+  if (!wrongKeyAlert) {
+    console.error("Wrong key alert element not found!");
+    return;
+  }
+  wrongKeyAlert.style.display = 'block';
+  wrongKeyAlert.style.opacity = '1';
+  setTimeout(() => {
+    wrongKeyAlert.style.opacity = '0';
+    setTimeout(() => {
+      wrongKeyAlert.style.display = 'none';
+    }, 300);
+  }, 1000);
+}
+
 
 // Update vehicle info display
 function updateVehicleInfo() {
@@ -879,30 +914,28 @@ function showPlanningInstructions() {
   overlay.className = 'message-overlay';
 
   overlay.innerHTML = `
-  <div class="message-box">
+  <div class="message-box" style="font-family: 'Segoe UI', sans-serif; font-size: 17px; color: #333; line-height: 1.6; margin: 0 auto;">
       <h2 style="color: #1e3c72; margin-bottom: 16px;">Instructions</h2>
 
       <p style="margin-bottom: 16px;">
-          Now, it's time to use what you've learned! In this phase, you will <strong>plan your moves in advance</strong> to collect as many rewards (💰) as possible while avoiding obstacles (🔥).
+          Now, it's time to use what you've learned! In this phase, you will <strong>plan your moves in advance</strong> to collect as many  <strong style="color: green;">rewards (💰)</strong> as possible while avoiding <strong style="color: red;">obstacles (🔥)</strong>.
       </p>
 
       <p style="margin-bottom: 16px;">
-          You will <strong>not see feedback</strong> while planning. You'll enter a sequence of <strong>4 moves</strong>, and the game will execute them all at once. You will not see how your vehicle moves.
+          You will <strong>not see feedback</strong> while planning. You'll enter a sequence of <strong>4 moves</strong>, and the game will execute them. You will not see how your vehicle moves.
       </p>
 
-      <p style="background: #f5f5f5; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
-          Just like before, a few trials will be <strong style="color: #1e3c72;">randomly selected</strong> to determine:
-          <ul style="list-style: none; padding-left: 0; margin: 0;">
-              <li style="margin-bottom: 8px;">
-                  
-                  <strong>Your bonus payment</strong> — based on rewards (💰) collected.
-              </li>
-              <li>
-                  
-                  <strong>Your time in the public speaking task</strong> — based on failures (🔥). You will read from a teleprompter while a live audience gives feedback in a real-time chat. They will rate your performance and confidence.
-              </li>
-          </ul>
-      </p>
+      <div style="background: #f5f5f5; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-family: 'Segoe UI', sans-serif; font-size: 18px;">
+        <p style="margin: 0 0 8px 0; font-weight: bold;">Just like before, a few trials will be <strong style="color: #1e3c72;">randomly selected</strong> to determine:</p>
+        <ul style="list-style: none; padding-left: 0; margin: 0;">
+          <li style="margin-bottom: 8px;">
+            <strong>Your bonus payment</strong> — based on the number of <span style="color: green;">rewards (💰)</span> you collected.
+          </li>
+          <li>
+            <strong>Your time in the public speaking task</strong> — based on the number of <span style="color: red;">obstacles (🔥)</span>. You will read from a teleprompter while a live audience gives feedback in a real-time chat. They will rate your performance and confidence.
+          </li>
+        </ul>
+      </div>
 
       <p style="font-weight: bold; margin-bottom: 12px;">
           Every trial counts. Plan carefully and think about what you learned from the earlier mazes.

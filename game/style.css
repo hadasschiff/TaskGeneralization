@@ -293,6 +293,24 @@ input[type="text"] {
   background-color: #162d5c;
 }
 
+.wrong-key-alert {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(255, 0, 0, 0.85);
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    padding: 20px 40px;
+    border-radius: 10px;
+    z-index: 9999;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+
 @keyframes fadeInOut {
     0% { opacity: 0; }
     50% { opacity: 1; }
