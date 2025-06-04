@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
  * Starts Phase 1 of the game when the start button is clicked
  */
 function startPhase1() {
-    console.log('Starting Phase 1 of the game');
+    console.log('Start button pressed');
     
     // Trigger game initialization function from game.js
     if (typeof initializeGame === 'function') {

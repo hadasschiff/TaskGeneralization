@@ -1,4 +1,4 @@
-
+//game.js
 function shuffleArray(arr) {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {
@@ -15,6 +15,7 @@ const vehicleColorQueues = {
   truck_big: shuffleArray(COLOR_PALETTE)
 };
 
+let vehicleTrialQueue = [];
 
 // End the game and show results
 function endGame() {
@@ -134,7 +135,7 @@ let score = 0;
 let gridWorld = [];
 let obstacles = [];
 let rewards = [];
-let inputEnabled = true;
+let inputEnabled = false;
 
 // Data collection
 let gameData = {
@@ -189,6 +190,7 @@ function createGameUI() {
   container.style.opacity = '1';
   
   // Create game UI structure
+  console.log('Creating the game UI');
   container.innerHTML = `
       <div class="header-bar">
           <div class="score-group">
@@ -225,7 +227,7 @@ function createGameUI() {
 function setupKeyboardListeners() {
   document.addEventListener('keydown', function(event) {
       // Only handle key presses during the active learning phase
-      if (!inputEnabled || currentPhase !== 1) return;
+      if (!inputEnabled || currentPhase !== 1 && currentPhase !== 0) return;
       
       const key = event.key.toLowerCase();
       console.log("Key pressed:", key);
@@ -255,101 +257,160 @@ function startLearningPhase() {
   currentPhase = 1;
   currentTrial = 1;
   score = 0;
-  
+
   // Update UI - only update score
   document.getElementById('score').textContent = score;
   
   // Reset game data
   gameData.phase1 = [];
   
+  generateVehicleQueue();
+
   // Show initial instructions before starting the first trial
   showTrialInstructions();
 }
 
+function generateVehicleQueue() {
+  const vehicleTypes = Object.values(VEHICLE_TYPES);
+  const repetitionsPerVehicle = 20; // or adjust for testing (4 during dev)
+  let queue = [];
+
+  for (let i = 0; i < repetitionsPerVehicle; i++) {
+    for (const v of vehicleTypes) {
+      queue.push({
+        type: v.type,
+        size: v.size,
+        keys: {
+          up: v.upKey,
+          down: v.downKey,
+          left: v.leftKey,
+          right: v.rightKey
+        }
+      });
+    }
+  }
+
+  vehicleTrialQueue = shuffleArray(queue);
+}
+
 // Show instructions before starting a trial
-function showTrialInstructions() {
-  // Create instruction overlay
+function showTrialInstructions(page = 1) {
+  console.log('Showing the main game instructions');
+  const container = document.querySelector('.game-container');
+  container.innerHTML = '';
+
   const overlay = document.createElement('div');
   overlay.className = 'message-overlay';
-  
-  // header text
-  overlay.innerHTML = `
-  <div class="message-box" style="font-family: 'Segoe UI', sans-serif; font-size: 17px; color: #333; line-height: 1.6; margin: 0 auto;">
-    <h2 style="color: #1e3c72; margin-bottom: 16px;">Instructions</h2>
 
-    <p style="margin-bottom: 16px;">
-      In this task, you will navigate a vehicle through different mazes. Use the keyboard to move the vehicle around the grid.
-    </p>
+  if (page === 1) {
+    overlay.innerHTML = `
+      <div class="message-box" style="font-family: 'Segoe UI', sans-serif; background: #fff; color: #222; border-radius: 12px; margin: auto; padding: 36px 40px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12); text-align: left;">
+        <h2 style="font-size: 2rem; color: #1e3c72; margin-bottom: 20px;">Instructions</h2>
+        <p style="font-size: 1.2rem; margin: 12px 0; line-height: 1.6; text-align: left;">
+            In this task, you will navigate a vehicle through different mazes. Use the keyboard to move the vehicle around the grid.</p>
+        <p style="font-size: 1.1rem; margin: 12px 0; text-align: left;">
+        Your goal is to collect as many <strong style="color: green;">rewards (💰)</strong> as possible while avoiding <strong style="color: red;">obstacles (🔥)</strong>.</p>
+        
+        <div style="background: #f5f5f5; border-radius: 10px; padding: 20px 24px; margin: 24px 0; text-align: left;">
+          <p style="margin-bottom: 12px; font-size: 1.2rem; line-height: 1.6; text-align: left;">
+          A few trials will be <strong style="color: #1e3c72;">randomly selected</strong>. These trials will determine:</p>
+          
+          <ul style="list-style: none; padding-left: 0; margin: 0;">
+            <li style="margin-bottom: 10px; font-size: 1.1rem;">
 
-    <p style="margin-bottom: 16px;">
-      Your goal is to collect as many <strong style="color: green;">rewards (💰)</strong> as possible while avoiding <strong style="color: red;">obstacles (🔥)</strong>.
-    </p>
+            <strong>Your bonus payment</strong> — based on the number of <span style="color: green;">rewards (💰)</span> you collect.</li>
+            <li style="margin-bottom: 10px; font-size: 1.1rem;">
 
-    <div style="background: #f5f5f5; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-family: 'Segoe UI', sans-serif; font-size: 18px;">
-      <p style= margin-bottom: 8px;">A few trials will be <strong style="color: #1e3c72;">randomly selected</strong>. These trials will determine:</p>
+            <strong>Your time in the public speaking task</strong> — based on the number of <span style="color: red;">obstacles (🔥)</span> you hit. You’ll read from a teleprompter while a live audience gives feedback in a chat. They will rate your performance and confidence.</li>
+          </ul>
+        </div>
 
-      <ul style="list-style: none; padding-left: 0; margin: 0;">
-        <li style="margin-bottom: 8px;">
+        <p style="font-size: 1.1rem; margin: 12px 0; text-align: left;">
+        <strong>Some trials will have no obstacles.</strong> In those trials, you'll see a <strong style="color: black;">❌</strong>. Reaching it will end the trial with <strong style="color: green;">no penalty</strong>.</p>
 
-          <strong>Your bonus payment</strong> — based on the number of <span style="color: green;">rewards (💰)</span> you collected.
-        </li>
-        <li>
+        <p style="font-size: 1.1rem; margin: 12px 0; text-align: left;">
 
-          <strong>Your time in the public speaking task</strong> — based on the number of <span style="color: red;">obstacles (🔥)</span>. You'll read from a teleprompter while a live audience gives feedback in a chat. They will rate your performance and confidence.
-        </li>
-      </ul>
-    </div>
+        
+        Try your best on each trial — you won’t know which ones will determine your outcomes!</p>
+        <div style="text-align: center; margin-top: 24px;">
+          <button id="next-instructions-btn" style="background-color: #1e3c72; color: white; padding: 12px 28px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.2s ease;">
+            Next
+          </button>
+        </div>
+      </div>
+    `;
 
-    <p style= margin-bottom: 12px;">
-      <strong>Every trial counts.</strong> Try your best on each trial — you won’t know which ones will determine your outcomes!
-    </p>
+    container.appendChild(overlay);
 
-    <p style="margin-bottom: 20px;">
-      Learn how each vehicle behaves in the mazes. This will help you perform better in later stages.
-    </p>
+    document.getElementById('next-instructions-btn').addEventListener('click', () => {
+      showTrialInstructions(2);
+    });
 
-    <button id="start-trial-btn" style="background-color: #1e3c72; color: white; padding: 12px 24px; font-size: 18px; border: none; border-radius: 6px; cursor: pointer;">
-      Start
-    </button>
-  </div>
-`;
+  } else if (page === 2) {
+    overlay.innerHTML = `
+      <div class="message-box" style="font-family: 'Segoe UI', sans-serif; background: #fff; color: #222; border-radius: 12px; margin: auto; padding: 36px 40px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12); text-align: left;">
+        <h2 style="font-size: 2rem; color: #1e3c72; margin-bottom: 20px; text-align: left;">Reminder</h2>
 
-  document.querySelector('.game-container').appendChild(overlay);
-  
-  // Add event listener to start trial button
-  const startButton = document.getElementById('start-trial-btn');
-  startButton.addEventListener('click', function() {
+        <p style="font-size: 1.2rem; margin: 12px 0; line-height: 1.6 ; text-align: left;">
+          <strong>Some vehicles will NOT have instructions.</strong> So pay close attention to the ones that do!
+        </p>
+
+        <p style="font-size: 1.1rem; margin: 12px 0; text-align: left;">
+          Remember, a few trials will be <strong style="color: #1e3c72;">randomly selected</strong> for your bonus and public speaking task.
+        </p>
+
+        <p style="font-size: 1.1rem; margin: 12px 0; text-align: left;">
+          The more <span style="color: red;">obstacles (🔥)</span> you hit in those trials, the <strong>longer</strong> you'll have to speak in front of a live audience, with <strong>your face and voice visible</strong>. They will rate your performance and confidence in real time.
+        </p>
+
+        <p style="font-size: 1.1rem; margin: 12px 0; text-align: left;">
+          Make careful choices — your actions will matter!
+        </p>
+
+        <p style="font-size: 1.1rem; margin: 12px 0; text-align: left;"><strong>Good luck!</strong></p>
+
+        <div style="text-align: center; margin-top: 24px;">
+          <button id="start-trial-btn" style="background-color: #1e3c72; color: white; padding: 12px 28px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.2s ease;">
+            Start
+          </button>
+        </div>
+      </div>
+
+    `;
+
+    container.appendChild(overlay);
+
+    document.getElementById('start-trial-btn').addEventListener('click', () => {
       overlay.remove();
-      createTrial();
-  });
+      createGameUI();
+      startPracticeTrial();
+      // createTrial();
+    });
+  }
 }
+
 
 // Create a new trial with a specific vehicle and grid
 function createTrial() {
+  inputEnabled = true;
+  console.log('creating new trial');
   // Reset score for the new trial
   if (currentPhase === 1) {
+    console.log('Phase 1');
     score = 0;
     document.getElementById('score').textContent = score;
     document.getElementById('success-count').textContent = 0;
     document.getElementById('failure-count').textContent = 0;
   }
-  // Select vehicle type based on trial number to ensure equal distribution
-  const vehicleTypeIndex = (currentTrial - 1) % 4;
-  const vehicleTypes = Object.values(VEHICLE_TYPES);
-  const selectedVehicleType = vehicleTypes[vehicleTypeIndex];
-  
-  // Update current vehicle
-  currentVehicle.type = selectedVehicleType.type;
-  currentVehicle.size = selectedVehicleType.size;
-  currentVehicle.keys = {
-      up: selectedVehicleType.upKey,
-      down: selectedVehicleType.downKey,
-      left: selectedVehicleType.leftKey,
-      right: selectedVehicleType.rightKey
-  };
-  
+  // Use the randomized vehicle queue
+  const vehicleData = vehicleTrialQueue[currentTrial - 1];
+  currentVehicle.type = vehicleData.type;
+  console.log('Set the vehicle type');
+  currentVehicle.size = vehicleData.size;
+  currentVehicle.keys = vehicleData.keys;
+
   // Select color
-  const key = `${selectedVehicleType.type}_${selectedVehicleType.size}`;
+  const key = `${currentVehicle.type}_${currentVehicle.size}`;
   const queue = vehicleColorQueues[key];
   const colorIndex = Math.floor((currentTrial - 1) / 4) % 20;
   // Get a color and assign to vehicle
@@ -362,7 +423,7 @@ function createTrial() {
 
   // Reset grid and place vehicle at random position
   resetGrid();
-  
+
   // Update vehicle info display
   updateVehicleInfo();
   
@@ -373,6 +434,7 @@ function createTrial() {
 // Reset and generate new grid world
 function resetGrid() {
   // Clear previous grid
+
   gridWorld = [];
   obstacles = [];
   rewards = [];
@@ -394,6 +456,10 @@ function resetGrid() {
   
   // Render grid
   renderGrid();
+}
+
+function vehicleAllowsObstacles(vehicle) {
+  return vehicle.type.startsWith('truck');
 }
 
 // Place obstacles and rewards in the grid
@@ -468,6 +534,26 @@ function placeObstaclesAndRewards() {
       gridWorld[y][x] = 'reward';
   }
 
+  // If the vehicle is a car, skip obstacles entirely
+  if (!vehicleAllowsObstacles(currentVehicle)) {
+    console.log("No obstacles for cars in this trial. Placing terminator tile.");
+  
+    // Place one "terminator" tile not on the path
+    let attempts = 0;
+    while (attempts < 100) {
+      attempts++;
+      const tx = Math.floor(Math.random() * GRID_SIZE);
+      const ty = Math.floor(Math.random() * GRID_SIZE);
+  
+      const occupied = path.some(p => p.x === tx && p.y === ty);
+      if (!occupied) {
+        gridWorld[ty][tx] = 'terminator';
+        break;
+      }
+    }
+    return;
+  }  
+
   // Place obstacles (3), avoiding all path positions
   let obstacleAttempts = 0;
   while (obstacles.length < 3 && obstacleAttempts < 100) {
@@ -507,6 +593,9 @@ function renderGrid() {
           } else if (gridWorld[y][x] === 'reward') {
               cellEl.classList.add('reward');
               cellEl.innerHTML = '💰'; // Money bag emoji
+          } else if (gridWorld[y][x] === 'terminator') {
+              cellEl.classList.add('terminator');
+              cellEl.innerHTML = '❌'; 
           }
           
           // Add vehicle if this is vehicle position
@@ -640,7 +729,8 @@ function updateVehicleInfo() {
       return;
   }
   
-  if (currentPhase === 1) {
+  if (currentPhase === 1 || currentPhase === 0) {
+    console.log('Showing control keys');
     // Phase 1 (learning) - show movement instructions
     movementInstructionsEl.innerHTML = `
       <p style="margin: 0; font-size: 18px; font-weight: bold; color: #020814;">
@@ -734,10 +824,8 @@ function moveVehicle(direction) {
   }
   
   // Record move
-  const trialIndex = currentTrial - 1;
-  const currentTrialData = currentPhase === 1 ? 
-                        gameData.phase1[trialIndex] : 
-                        gameData.phase2[trialIndex];
+  const currentTrialData = getCurrentTrialData();
+  if (!currentTrialData) return;
   
   currentTrialData.moves.push({
       direction,
@@ -777,10 +865,9 @@ function checkCollisions() {
       document.getElementById('score').textContent = score;
       
       // Record obstacle hit
-      const trialIndex = currentTrial - 1;
-      const currentTrialData = currentPhase === 1 ? 
-                            gameData.phase1[trialIndex] : 
-                            gameData.phase2[trialIndex];
+      const currentTrialData = getCurrentTrialData();
+      if (!currentTrialData) return;
+      
       currentTrialData.obstaclesHit++;
   }
   
@@ -802,26 +889,33 @@ function checkCollisions() {
       document.getElementById('score').textContent = score;
       
       // Record reward collection
-      const trialIndex = currentTrial - 1;
-      const currentTrialData = currentPhase === 1 ? 
-                            gameData.phase1[trialIndex] : 
-                            gameData.phase2[trialIndex];
+      const currentTrialData = getCurrentTrialData();
+      if (!currentTrialData) return;
+      
       currentTrialData.rewardsCollected++;
+     
   }
-  
+  if (gridWorld[currentVehicle.y][currentVehicle.x] === 'terminator') {
+    console.log("Hit terminator tile. Ending trial.");
+    endTrial();
+  }
   // Check if all rewards are collected or no more moves possible
   if (rewards.length === 0 || (obstacles.length === 0 && rewards.length === 0)) {
       endTrial();
   }
+  
+  if (currentPhase === 0 && (rewards.length === 0)) {
+    endPracticeTrial();
+  }
+
 }
 
 // End current trial
 function endTrial() {
   // Record trial end data
-  const trialIndex = currentTrial - 1;
-  const currentTrialData = currentPhase === 1 ? 
-                        gameData.phase1[trialIndex] : 
-                        gameData.phase2[trialIndex];
+  const currentTrialData = getCurrentTrialData();
+  if (!currentTrialData) return;
+  
   
   currentTrialData.endTime = Date.now();
   currentTrialData.totalTime = currentTrialData.endTime - currentTrialData.startTime;
@@ -846,6 +940,7 @@ function showTrialResults() {
 
   // after fade in go to next trial
   setTimeout(() => {
+    if (currentPhase === 0) return; // Block extra trials in practice
     continueToNextTrial();
     // fade out after new trial
     setTimeout(() => {
@@ -861,6 +956,9 @@ function showTrialResults() {
   
 // Continue to the next trial or phase
 function continueToNextTrial() {
+  if (currentPhase === 0) {
+    return;
+  }
   // Remove the overlay
   const overlay = document.querySelector('.message-overlay');
   if (overlay) {
@@ -903,6 +1001,8 @@ function startPlanningPhase() {
   // Reset game data for phase 2
   gameData.phase2 = [];
       
+  generateVehicleQueue();
+
   // Show instructions for first planning trial
   showPlanningInstructions();
   };
@@ -915,20 +1015,20 @@ function showPlanningInstructions() {
 
   overlay.innerHTML = `
   <div class="message-box" style="font-family: 'Segoe UI', sans-serif; font-size: 17px; color: #333; line-height: 1.6; margin: 0 auto;">
-      <h2 style="color: #1e3c72; margin-bottom: 16px;">Instructions</h2>
+      <h2 style="color: #1e3c72; margin-bottom: 16px; text-align: left;">Instructions</h2>
 
-      <p style="margin-bottom: 16px;">
+      <p style="margin-bottom: 16px; text-align: left;">
           Now, it's time to use what you've learned! In this phase, you will <strong>plan your moves in advance</strong> to collect as many  <strong style="color: green;">rewards (💰)</strong> as possible while avoiding <strong style="color: red;">obstacles (🔥)</strong>.
       </p>
 
-      <p style="margin-bottom: 16px;">
+      <p style="margin-bottom: 16px; text-align: left;">
           You will <strong>not see feedback</strong> while planning. You'll enter a sequence of <strong>4 moves</strong>, and the game will execute them. You will not see how your vehicle moves.
       </p>
 
-      <div style="background: #f5f5f5; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-family: 'Segoe UI', sans-serif; font-size: 18px;">
-        <p style="margin: 0 0 8px 0; font-weight: bold;">Just like before, a few trials will be <strong style="color: #1e3c72;">randomly selected</strong> to determine:</p>
-        <ul style="list-style: none; padding-left: 0; margin: 0;">
-          <li style="margin-bottom: 8px;">
+      <div style="background: #f5f5f5; border-radius: 8px; padding: 12px 16px; text-align: left; margin-bottom: 16px; font-family: 'Segoe UI', sans-serif; font-size: 18px;">
+        <p style="margin: 0 0 8px 0; text-align: left; font-weight: bold;">Just like before, a few trials will be <strong style="color: #1e3c72;">randomly selected</strong> to determine:</p>
+        <ul style="list-style: none; padding-left: 0; text-align: left; margin: 0;">
+          <li style="margin-bottom: 8px; text-align: left;">
             <strong>Your bonus payment</strong> — based on the number of <span style="color: green;">rewards (💰)</span> you collected.
           </li>
           <li>
@@ -937,11 +1037,11 @@ function showPlanningInstructions() {
         </ul>
       </div>
 
-      <p style="font-weight: bold; margin-bottom: 12px;">
-          Every trial counts. Plan carefully and think about what you learned from the earlier mazes.
+      <p style="font-weight: bold; margin-bottom: 12px; text-align: left;">
+          Plan carefully and think about what you learned from the earlier mazes.
       </p>
 
-      <p style="margin-bottom: 20px;">
+      <p style="margin-bottom: 20px; text-align: left;">
           Good luck! When you're ready, click below to begin.
       </p>
 
@@ -971,20 +1071,11 @@ function convertToPlanningMode() {
 // Create a planning trial
 function createPlanningTrial() {
   // Similar to createTrial but for planning phase
-  // Select vehicle type - 5 of each category
-  const categoryIndex = Math.floor((currentTrial - 1) / 5);
-  const vehicleTypes = Object.values(VEHICLE_TYPES);
-  const selectedVehicleType = vehicleTypes[categoryIndex % 4];
-  
-  // Update current vehicle
-  currentVehicle.type = selectedVehicleType.type;
-  currentVehicle.size = selectedVehicleType.size;
-  currentVehicle.keys = {
-      up: selectedVehicleType.upKey,
-      down: selectedVehicleType.downKey,
-      left: selectedVehicleType.leftKey,
-      right: selectedVehicleType.rightKey
-  };
+  // Use the randomized vehicle queue
+  const vehicleData = vehicleTrialQueue[currentTrial - 1];
+  currentVehicle.type = vehicleData.type;
+  currentVehicle.size = vehicleData.size;
+  currentVehicle.keys = vehicleData.keys;
   
   // New color for phase 2
   currentVehicle.color = '#' + Math.floor(Math.random()*16777215).toString(16);
@@ -1005,9 +1096,20 @@ function createPlanningTrial() {
   }
 }
 
+function getCurrentTrialData() {
+  const trialIndex = currentTrial - 1;
+  switch (currentPhase) {
+      case 0: return gameData.practice[0]; // single practice trial
+      case 1: return gameData.phase1[trialIndex];
+      case 2: return gameData.phase2[trialIndex];
+      default: return null;
+  }
+}
+
+
 // Submit plan for current trial
 function submitPlan() {
-  console.log("Submitting plan...");
+  console.log("Submitting plan");
   
   const moveSequenceInput = document.getElementById('move-sequence');
   
