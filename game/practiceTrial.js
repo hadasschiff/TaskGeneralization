@@ -1,5 +1,4 @@
 // practiceTrial.js
-
 function startPracticeTrial() {
     console.log('Starting practice phase');
     currentPhase = 0;
@@ -19,8 +18,6 @@ function startPracticeTrial() {
         y: 0
     };
 
-    //rewards = [{ x: 1, y: 1 }];
-    //obstacles = [{ x: 2, y: 2 }];
 
     rewards = [
         { x: 1, y: 1 },
@@ -38,9 +35,7 @@ function startPracticeTrial() {
         Array.from({ length: GRID_SIZE }, () => 'empty')
     );
     
-    
-    //gridWorld[1][1] = 'reward';
-    //gridWorld[2][2] = 'obstacle';
+
 
     // Place rewards
     rewards.forEach(pos => {
@@ -77,7 +72,7 @@ function showPracticeInstructions() {
         <div class="message-box" style="text-align: left;">
             <h2>This is a Practice Trial</h2>
             <p style="font-size: 1.2rem; margin: 12px 0; line-height: 1.6; text-align: left;">
-            Use the correct keys to move the car around the grid.</p>
+            Use the correct keys to move the car around the maze.</p>
             <p>Try collecting the 💰 reward and avoiding the 🔥 obstacle.</p>
             <div style="text-align: center; margin-top: 20px;">
                 <button id="start-practice-btn" style="padding: 10px 20px;">Start</button>

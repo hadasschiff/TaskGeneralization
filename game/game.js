@@ -307,7 +307,7 @@ function showTrialInstructions(page = 1) {
       <div class="message-box" style="font-family: 'Segoe UI', sans-serif; background: #fff; color: #222; border-radius: 12px; margin: auto; padding: 36px 40px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12); text-align: left;">
         <h2 style="font-size: 2rem; color: #1e3c72; margin-bottom: 20px;">Instructions</h2>
         <p style="font-size: 1.2rem; margin: 12px 0; line-height: 1.6; text-align: left;">
-            In this task, you will navigate a vehicle through different mazes. Use the keyboard to move the vehicle around the grid.</p>
+            In this task, you will navigate a vehicle through different mazes. In each trial you will be instructed how to move the vehicle across the maze.</p>
         <p style="font-size: 1.1rem; margin: 12px 0; text-align: left;">
         Your goal is to collect as many <strong style="color: green;">rewards (💰)</strong> as possible while avoiding <strong style="color: red;">obstacles (🔥)</strong>.</p>
         
@@ -321,7 +321,7 @@ function showTrialInstructions(page = 1) {
             <strong>Your bonus payment</strong> — based on the number of <span style="color: green;">rewards (💰)</span> you collect.</li>
             <li style="margin-bottom: 10px; font-size: 1.1rem;">
 
-            <strong>Your time in the public speaking task</strong> — based on the number of <span style="color: red;">obstacles (🔥)</span> you hit. You’ll read from a teleprompter while a live audience gives feedback in a chat. They will rate your performance and confidence.</li>
+            <strong>Your time in a public speaking task</strong> — based on the number of <span style="color: red;">obstacles (🔥)</span> you hit. You’ll read from a teleprompter while a live audience gives feedback in a chat. They will rate your performance and confidence.</li>
           </ul>
         </div>
 
@@ -352,11 +352,11 @@ function showTrialInstructions(page = 1) {
         <h2 style="font-size: 2rem; color: #1e3c72; margin-bottom: 20px; text-align: left;">Reminder</h2>
 
         <p style="font-size: 1.2rem; margin: 12px 0; line-height: 1.6 ; text-align: left;">
-          <strong>Some vehicles will NOT have instructions.</strong> So pay close attention to the ones that do!
+          <strong>Some vehicles will NOT tell you how to navigate around the maze,</strong> So you can prepare for these vechicles by learning to naviage that ones that do.
         </p>
 
         <p style="font-size: 1.1rem; margin: 12px 0; text-align: left;">
-          Remember, a few trials will be <strong style="color: #1e3c72;">randomly selected</strong> for your bonus and public speaking task.
+          Remember, a few trials will be <strong style="color: #1e3c72;">randomly selected</strong> for your bonus and a public speaking task.
         </p>
 
         <p style="font-size: 1.1rem; margin: 12px 0; text-align: left;">
@@ -390,7 +390,7 @@ function showTrialInstructions(page = 1) {
 }
 
 
-// Create a new trial with a specific vehicle and grid
+// Create a new trial with a specific vehicle and maze
 function createTrial() {
   inputEnabled = true;
   console.log('creating new trial');
@@ -421,7 +421,7 @@ function createTrial() {
     vehicleColorQueues[key] = shuffleArray(COLOR_PALETTE);
   }
 
-  // Reset grid and place vehicle at random position
+  // Reset maze and place vehicle at random position
   resetGrid();
 
   // Update vehicle info display
@@ -431,7 +431,7 @@ function createTrial() {
   startTrialTimer();
 }
 
-// Reset and generate new grid world
+// Reset and generate new maze
 function resetGrid() {
   // Clear previous grid
 
@@ -1022,7 +1022,7 @@ function showPlanningInstructions() {
       </p>
 
       <p style="margin-bottom: 16px; text-align: left;">
-          You will <strong>not see feedback</strong> while planning. You'll enter a sequence of <strong>4 moves</strong>, and the game will execute them. You will not see how your vehicle moves.
+          You will <strong>not see feedback.</strong> You'll enter a sequence of <strong>4 moves</strong>, and the game will execute them. You will not see how your vehicle moves.
       </p>
 
       <div style="background: #f5f5f5; border-radius: 8px; padding: 12px 16px; text-align: left; margin-bottom: 16px; font-family: 'Segoe UI', sans-serif; font-size: 18px;">
@@ -1032,7 +1032,7 @@ function showPlanningInstructions() {
             <strong>Your bonus payment</strong> — based on the number of <span style="color: green;">rewards (💰)</span> you collected.
           </li>
           <li>
-            <strong>Your time in the public speaking task</strong> — based on the number of <span style="color: red;">obstacles (🔥)</span>. You will read from a teleprompter while a live audience gives feedback in a real-time chat. They will rate your performance and confidence.
+            <strong>Your time in a public speaking task</strong> — based on the number of <span style="color: red;">obstacles (🔥)</span>. You will read from a teleprompter while a live audience gives feedback in a real-time chat. They will rate your performance and confidence.
           </li>
         </ul>
       </div>
