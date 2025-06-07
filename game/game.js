@@ -212,7 +212,7 @@ function createGameUI() {
           <div id="controls-info">
             <div id="movement-instructions"></div>
             <div id="planning-controls" style="display: none;">
-              <p><strong>plan your moves!</strong> Enter your move sequence below:</p>
+              <p><strong>plan your 4 moves!</strong> Enter your move sequence below:</p>
               <div class="planning-input">
                 <input type="text" id="move-sequence" placeholder="e.g. uujjzx">
                 <button id="submit-plan">Submit</button>
@@ -382,9 +382,7 @@ function showTrialInstructions(page = 1) {
 
     document.getElementById('start-trial-btn').addEventListener('click', () => {
       overlay.remove();
-      createGameUI();
-      startPracticeTrial();
-      // createTrial();
+      startTeleprompterSimulation()
     });
   }
 }
@@ -757,12 +755,31 @@ if (submitButton && !submitButton.listenerAdded) {
 
 if (moveSequenceInput && !moveSequenceInput.listenerAdded) {
   moveSequenceInput.addEventListener('keydown', function(event) {
+    const isControlKey = [
+      'Backspace',
+      'Delete',
+      'ArrowLeft',
+      'ArrowRight',
+      'Tab'
+    ].includes(event.key);
+
+
+    // Block input if already 4 characters, unless it's a control key or Enter
+    if (
+      !isControlKey &&
+      event.key.length === 1 &&  // only block actual characters
+      moveSequenceInput.value.length >= 4 &&
+      event.key !== 'Enter'
+    ) {
+      event.preventDefault();} 
+
     if (event.key === 'Enter') {
-      event.preventDefault();
-      submitPlan();
+        event.preventDefault();
+        submitPlan();
     }
   });
-  moveSequenceInput.listenerAdded = true; // Prevent multiple listeners
+  
+  moveSequenceInput.listenerAdded = true;
 }
 
   }
