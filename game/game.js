@@ -754,14 +754,21 @@ if (submitButton && !submitButton.listenerAdded) {
 }
 
 if (moveSequenceInput && !moveSequenceInput.listenerAdded) {
+  moveSequenceInput.listenerAdded = true;
+
   moveSequenceInput.addEventListener('keydown', function(event) {
-    const isControlKey = [
-      'Backspace',
-      'Delete',
-      'ArrowLeft',
-      'ArrowRight',
-      'Tab'
-    ].includes(event.key);
+    const currentTrialData = getCurrentTrialData();
+
+    // Initialize input log if not present
+    if (!currentTrialData.rawInputKeys) {
+      currentTrialData.rawInputKeys = [];
+    }
+
+    // Record the raw key
+    currentTrialData.rawInputKeys.push(event.key);
+
+    // Prevent typing more than 4 characters unless it's a control key
+    const isControlKey = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab'].includes(event.key);
 
 
     // Block input if already 4 characters, unless it's a control key or Enter
@@ -1181,7 +1188,26 @@ function submitPlan() {
   
   // Clear the input field
   moveSequenceInput.value = '';
+
+  currentTrialData.inputSequence = moveSequence;
+  currentTrialData.vehicleInfo = {
+    type: currentVehicle.type,
+    size: currentVehicle.size,
+    trialNumber: currentTrial
+  };
+
+
+  // ✅ Debug print
+  console.log('Submitted Plan Summary:', {
+    inputSequence: currentTrialData.inputSequence,
+    rawInputKeys: currentTrialData.rawInputKeys,
+    vehicle: currentTrialData.vehicleInfo
+  });
+
   
+  // Clear the input field
+  moveSequenceInput.value = '';
+
   // End the trial
   endTrial();
 }
