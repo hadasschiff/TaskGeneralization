@@ -11,8 +11,10 @@ function shuffleArray(arr) {
 const vehicleColorQueues = {
   car_small: shuffleArray(COLOR_PALETTE),
   car_big: shuffleArray(COLOR_PALETTE),
+  car_medium: shuffleArray(COLOR_PALETTE),
   truck_small: shuffleArray(COLOR_PALETTE),
   truck_big: shuffleArray(COLOR_PALETTE),
+  truck_medium: shuffleArray(COLOR_PALETTE),
   new_truck_small:shuffleArray(COLOR_PALETTE),
   new_truck_big: shuffleArray(COLOR_PALETTE)
 };
@@ -179,7 +181,8 @@ function initializeGame() {
   setupKeyboardListeners();
   
   // Start Phase 1
-  startLearningPhase();
+  showTrialInstructions();
+  //startLearningPhase();
 }
 
 // Create the game UI elements
@@ -269,21 +272,28 @@ function startLearningPhase() {
   generateVehicleQueue();
 
   // Show initial instructions before starting the first trial
-  showTrialInstructions();
+  //showTrialInstructions();
 }
 
 function generateVehicleQueue() {
   const vehicleTypes = Object.values(VEHICLE_TYPES);
-  const repetitionsPerVehicle = 20; // or adjust for testing (4 during dev)
+  console.log('Phase:', currentPhase, 'Vehicles:', vehicleTypes.length);
+
   let queue = [];
 
-  for (let i = 0; i < repetitionsPerVehicle; i++) {
-    for (const v of vehicleTypes) {
+  for (const v of vehicleTypes) {
+    // Skip the new truck and the medium sizes if we're in the learning phase
+    if (currentPhase === 1 && (v.type === 'new_truck' || v.size === 'medium')) {
+      console.log('Skipping', v.type, v.size);
+      continue;
+    }
+
+    // Use 20 repetitions for learning (4 for dev), 10 for planning
+    const repetitions = currentPhase === 1 ? LEARNING_TRIALS : PLANNING_TRIALS;
+    console.log('Using reps', repetitions, 'for', v.type, v.size);
 
 
-      // Skip the new truck if we're in the learning phase
-      if (currentPhase === 1 && v.type === 'new_truck') continue;
-
+    for (let i = 0; i < repetitions; i++) {
       queue.push({
         type: v.type,
         size: v.size,
@@ -296,9 +306,9 @@ function generateVehicleQueue() {
         });
       }
     }
-  
-
   vehicleTrialQueue = shuffleArray(queue);
+  console.log("Generated trials:", vehicleTrialQueue.map(v => `${v.type}-${v.size}`));
+
 }
 
 // Show instructions before starting a trial
@@ -413,6 +423,7 @@ function createTrial() {
   currentVehicle.type = vehicleData.type;
   console.log('Set the vehicle type');
   currentVehicle.size = vehicleData.size;
+  console.log(`Learning Phase - Vehicle: ${currentVehicle.type}, Size: ${currentVehicle.size}`);
   currentVehicle.keys = vehicleData.keys;
 
   // Select color
@@ -626,6 +637,9 @@ function renderGrid() {
             if (currentVehicle.size === 'small') {
                 vehicle.style.width = '50%';
                 vehicle.style.height = '50%';
+            } else if (currentVehicle.size === 'medium') {
+                vehicle.style.width = '75%';
+                vehicle.style.height = '75%';
             } else {
                 vehicle.style.width = '100%';
                 vehicle.style.height = '100%';
@@ -654,8 +668,11 @@ function renderGrid() {
       previewVehicle.style.position = 'relative';
 
       if (currentVehicle.size === 'small') {
-          previewVehicle.style.width = '70%';
-          previewVehicle.style.height = '70%';
+          previewVehicle.style.width = '50%';
+          previewVehicle.style.height = '50%';
+      } else if (currentVehicle.size === 'medium') {
+          previewVehicle.style.width = '75%';
+          previewVehicle.style.height = '75%';
       } else {
           previewVehicle.style.width = '100%';
           previewVehicle.style.height = '100%';
@@ -1000,10 +1017,10 @@ function continueToNextTrial() {
   console.log(`Current trial: ${currentTrial}, Phase: ${currentPhase}`);
   
   // Check if phase is complete
-  if (currentPhase === 1 && currentTrial >= LEARNING_TRIALS) {
+  if (currentPhase === 1 && currentTrial >= vehicleTrialQueue.length) {
       console.log("Starting planning phase...");
       startPlanningPhase();
-  } else if (currentPhase === 2 && currentTrial >= PLANNING_TRIALS) {
+  } else if (currentPhase === 2 && currentTrial >= vehicleTrialQueue.length) {
       console.log("Ending game...");
       endGame();
   } else {
@@ -1117,6 +1134,8 @@ function createPlanningTrial() {
   
   // Update vehicle info display
   updateVehicleInfo();
+  console.log(`Planning Phase - Vehicle: ${currentVehicle.type}, Size: ${currentVehicle.size}`);
+
   
   // Start trial timer
   startTrialTimer();

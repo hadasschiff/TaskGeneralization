@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Ensure the start button is properly connected
     const startButton = document.querySelector('.start-btn');
     if (startButton) {
-        startButton.addEventListener('click', startPhase1);
+        startButton.addEventListener('click', startGame);
     }
     
     // Add hover effect for car if needed beyond CSS
@@ -23,9 +23,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * Starts Phase 1 of the game when the start button is clicked
+ * Starts the game when the start button is clicked
  */
-function startPhase1() {
+function startGame() {
     console.log('Start button pressed');
     
     // Trigger game initialization function from game.js

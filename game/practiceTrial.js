@@ -181,6 +181,7 @@ function checkAnswer(qNum, choice) {
             document.querySelector('.message-overlay').remove();
             currentPhase = 1;
             createGameUI();
+            startLearningPhase();
             createTrial(); // Proceed to main game
         });
     }
