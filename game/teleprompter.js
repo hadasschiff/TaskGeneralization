@@ -39,7 +39,7 @@ function showTeleprompterScroll() {
 
     const teleprompter = document.createElement('div');
     teleprompter.style.position = 'relative';
-    teleprompter.style.height = '500px';
+    teleprompter.style.height = '450px';
     teleprompter.style.width = '50%';
     teleprompter.style.overflow = 'hidden';
     teleprompter.style.background = '#ffffff';
@@ -51,6 +51,26 @@ function showTeleprompterScroll() {
     teleprompter.style.lineHeight = '2';
     teleprompter.style.color = '#222';
     teleprompter.style.fontFamily = "'Segoe UI', sans-serif";
+    teleprompter.style.marginTop = '30px';
+
+    const recordingIndicator = document.createElement('div');
+    recordingIndicator.innerHTML = ` 
+      <span class="recording-dot" style="margin-right: 8px;"></span>
+      <span style="font-weight: bold;">Recording  </span> 🎤
+     `;
+    recordingIndicator.style.display = 'flex';
+    recordingIndicator.style.alignItems = 'center';
+    recordingIndicator.style.justifyContent = 'center';
+    recordingIndicator.style.fontSize = '20px';
+    recordingIndicator.style.color = '#d11a2a';
+    recordingIndicator.style.fontWeight = 'bold';
+    recordingIndicator.style.marginBottom = '12px';
+
+    container.appendChild(recordingIndicator);
+    container.appendChild(teleprompter);
+
+
+
 
     const text = document.createElement('div');
     text.innerHTML = `
@@ -79,7 +99,7 @@ function showTeleprompterScroll() {
     const duration = 20000; // 20 seconds scroll time
     //const distance = teleprompter.offsetHeight + text.offsetHeight;
     const distance = teleprompter.offsetHeight + text.offsetHeight + 50;
-        
+
 
     function step(timestamp) {
         if (!start) start = timestamp;

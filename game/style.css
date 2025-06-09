@@ -316,3 +316,19 @@ input[type="text"] {
     50% { opacity: 1; }
     100% { opacity: 0; }
 }
+
+.recording-dot {
+    display: inline-block;
+    margin-left: 8px;
+    width: 10px;
+    height: 10px;
+    background-color: red;
+    border-radius: 50%;
+    animation: blink 1s infinite;
+  }
+  
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.1; }
+  }
+  
