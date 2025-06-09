@@ -12,7 +12,9 @@ const vehicleColorQueues = {
   car_small: shuffleArray(COLOR_PALETTE),
   car_big: shuffleArray(COLOR_PALETTE),
   truck_small: shuffleArray(COLOR_PALETTE),
-  truck_big: shuffleArray(COLOR_PALETTE)
+  truck_big: shuffleArray(COLOR_PALETTE),
+  new_truck_small:shuffleArray(COLOR_PALETTE),
+  new_truck_big: shuffleArray(COLOR_PALETTE)
 };
 
 let vehicleTrialQueue = [];
@@ -277,6 +279,11 @@ function generateVehicleQueue() {
 
   for (let i = 0; i < repetitionsPerVehicle; i++) {
     for (const v of vehicleTypes) {
+
+
+      // Skip the new truck if we're in the learning phase
+      if (currentPhase === 1 && v.type === 'new_truck') continue;
+
       queue.push({
         type: v.type,
         size: v.size,
@@ -285,10 +292,11 @@ function generateVehicleQueue() {
           down: v.downKey,
           left: v.leftKey,
           right: v.rightKey
-        }
-      });
+          }
+        });
+      }
     }
-  }
+  
 
   vehicleTrialQueue = shuffleArray(queue);
 }
@@ -457,7 +465,7 @@ function resetGrid() {
 }
 
 function vehicleAllowsObstacles(vehicle) {
-  return vehicle.type.startsWith('truck');
+  return (vehicle.type.startsWith('truck') || vehicle.type === 'new_truck');
 }
 
 // Place obstacles and rewards in the grid

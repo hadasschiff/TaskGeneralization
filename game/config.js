@@ -10,7 +10,9 @@ const VEHICLE_TYPES = {
   CAR_SMALL: { type: 'car', size: 'small', upKey: 'w', downKey: 's', leftKey: 'a', rightKey: 'd' },
   CAR_BIG: { type: 'car', size: 'big', upKey: 'w', downKey: 's', leftKey: 'q', rightKey: 'e' },
   TRUCK_SMALL: { type: 'truck', size: 'small', upKey: 'u', downKey: 'j', leftKey: 'h', rightKey: 'k' },
-  TRUCK_BIG: { type: 'truck', size: 'big', upKey: 'u', downKey: 'j', leftKey: 'y', rightKey: 'i' }
+  TRUCK_BIG: { type: 'truck', size: 'big', upKey: 'u', downKey: 'j', leftKey: 'y', rightKey: 'i' },
+  NEW_TRUCK_BIG: { type: 'new_truck', size: 'big', upKey: 'u', downKey: 'j', leftKey: 'y', rightKey: 'i' },
+  NEW_TRUCK_SMALL: { type: 'new_truck', size: 'small', upKey: 'u', downKey: 'j', leftKey: 'y', rightKey: 'i' }
 };
 
 // Color palettes for vehicle types
