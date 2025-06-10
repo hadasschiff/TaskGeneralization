@@ -5,7 +5,6 @@ const GRID_SIZE = 3;
 const LEARNING_TRIALS = 1; // change after to 20
 const PLANNING_TRIALS = 2; // change after to 10
 
-
 // Vehicle types and controls
 const VEHICLE_TYPES = {
   CAR_SMALL: { type: 'car', size: 'small', upKey: 'w', downKey: 's', leftKey: 'a', rightKey: 'd' },
@@ -20,9 +19,9 @@ const VEHICLE_TYPES = {
 
 // Color palettes for vehicle types
 const COLOR_PALETTE = [
-      '#FF5733', '#FF8C33', '#FFC133', '#FFFF33', '#C1FF33', 
-      '#8CFF33', '#57FF33', '#33FF8C', '#FF3366', '#FF99CC',
-      '#33FFC1', '#33FFFF', '#33C1FF', '#338CFF', '#3357FF', 
-      '#5733FF', '#8C33FF', '#C133FF', '#CC99FF', '#FF33FF'
+      '#FF5733', '#f5a567', '#F08080', '#FFFF33', '#ad5d24', 
+      '#DC143C', '#33FF57', '#f03513', '#FF3366', '#FF99CC',
+      '#33FFC1', '#228B22', '#33C1FF', '#2c0eb5', '#3357FF', 
+      '#801212', '#8C33FF', '#C133FF', '#CC99FF', '#FF33FF'
   ]
 ;

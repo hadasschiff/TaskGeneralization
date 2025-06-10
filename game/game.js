@@ -443,6 +443,40 @@ function createTrial() {
 
   // Update vehicle info display
   updateVehicleInfo();
+
+  renderVehiclePreview();
+
+    // // Preview the vehicle in the side panel
+    // const previewEl = document.getElementById('vehicle-display');
+    // if (previewEl) {
+    //     previewEl.innerHTML = ''; // clean previous one
+  
+    //     const previewVehicle = document.createElement('div');
+    //     previewVehicle.className = 'vehicle-image';
+    //     //previewVehicle.style.backgroundImage = `url('/vehicles/${currentVehicle.type}.svg')`;
+    //     loadColoredSvg(`/vehicles/${currentVehicle.type}.svg`, 'pink')
+    //     .then(coloredUrl => {
+    //       previewVehicle.style.backgroundImage = `url(${coloredUrl})`;
+    //     });
+    //     previewVehicle.style.backgroundSize = 'contain';
+    //     previewVehicle.style.backgroundRepeat = 'no-repeat';
+    //     previewVehicle.style.backgroundPosition = 'center';
+    //     previewVehicle.style.filter = `drop-shadow(0 0 0 ${currentVehicle.color}) saturate(200%) brightness(80%)`;
+    //     previewVehicle.style.position = 'relative';
+  
+    //     if (currentVehicle.size === 'small') {
+    //         previewVehicle.style.width = '50%';
+    //         previewVehicle.style.height = '50%';
+    //     } else if (currentVehicle.size === 'medium') {
+    //         previewVehicle.style.width = '75%';
+    //         previewVehicle.style.height = '75%';
+    //     } else {
+    //         previewVehicle.style.width = '100%';
+    //         previewVehicle.style.height = '100%';
+    //     }
+  
+    //     previewEl.appendChild(previewVehicle);
+    // }
   
   // Start trial timer and record data
   startTrialTimer();
@@ -619,7 +653,13 @@ function renderGrid() {
           if (x === currentVehicle.x && y === currentVehicle.y) {
               const vehicle = document.createElement('div');
               vehicle.className = 'vehicle-image';
-              vehicle.style.backgroundImage = `url('/vehicles/${currentVehicle.type}.svg')`; 
+              console.log(currentVehicle.color);
+              loadColoredSvg(`/vehicles/${currentVehicle.type}.svg`, currentVehicle.color)
+                .then(coloredUrl => {
+                  vehicle.style.backgroundImage = `url(${coloredUrl})`;
+                });
+
+              //vehicle.style.backgroundImage = `url('/vehicles/${currentVehicle.type}.svg')`; 
               //               vehicle.style.backgroundImage = `url("data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%201024%201024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M766.976%20508.736c80.576%200%20152.448%2032.128%20199.232%2082.176%22%20fill%3D%22%23AEBCC3%22/%3E%3Cpath%20d%3D%22M64.704%20684.992c10.816%2019.2%2032.064%2032.192%2056.576%2032.192h784.64c35.84%200%2064.832-27.648%2064.832-61.76v-17.408h-36.608a15.744%2015.744%200%200%201-16.064-15.296V550.912a277.568%20277.568%200%200%200-150.144-44.16h1.6l-55.04-0.256c-53.632-115.2-157.504-210.752-294.208-210.752-136.512%200-251.008%2089.728-282.176%20210.688h-16.832c-35.456%200-56.128%2027.392-56.128%2061.184%22%20fill%3D%22%23e8447a%22/%3E%3Cpath%20d%3D%22M64.704%20654.464h13.76a39.168%2039.168%200%200%200%2040.064-38.272v-17.6c0-21.12-17.92-38.208-40.064-38.208h-13.376%22%20fill%3D%22%23F5BB1D%22/%3E%3Cpath%20d%3D%22M160%20684.992a101.632%2096.832%200%201%200%20203.264%200%20101.632%2096.832%200%201%200-203.264%200Z%22%20fill%3D%22%23455963%22/%3E%3Cpath%20d%3D%22M218.88%20684.992a42.752%2040.768%200%201%200%2085.504%200%2042.752%2040.768%200%201%200-85.504%200Z%22%20fill%3D%22%23AEBCC3%22/%3E%3Cpath%20d%3D%22M652.032%20684.992a101.568%2096.832%200%201%200%20203.136%200%20101.568%2096.832%200%201%200-203.136%200Z%22%20fill%3D%22%23455963%22/%3E%3Cpath%20d%3D%22M710.912%20684.992a42.752%2040.768%200%201%200%2085.504%200%2042.752%2040.768%200%201%200-85.504%200Z%22%20fill%3D%22%23AEBCC3%22/%3E%3Cpath%20d%3D%22M966.272%20591.104v-0.192a257.92%20257.92%200%200%200-48.192-40V622.72c0%208.448%207.232%2015.296%2016.064%2015.296h36.608v-42.304l-4.48-4.608z%22%20fill%3D%22%23F5BB1D%22/%3E%3Cpath%20d%3D%22M405.568%20335.616c-104.896%206.336-191.296%2076.8-216.64%20170.816h216.64V335.616zM445.696%20506.432h216.64c-41.216-86.848-117.12-159.616-216.64-170.048v170.048z%22%20fill%3D%22%23631536%22/%3E%3C/svg%3E")`;
 
               vehicle.style.backgroundSize = 'contain';
@@ -653,33 +693,7 @@ function renderGrid() {
       }
 
   }
-  // Preview the vehicle in the side panel
-  const previewEl = document.getElementById('vehicle-display');
-  if (previewEl) {
-      previewEl.innerHTML = ''; // clean previous one
 
-      const previewVehicle = document.createElement('div');
-      previewVehicle.className = 'vehicle-image';
-      previewVehicle.style.backgroundImage = `url('/vehicles/${currentVehicle.type}.svg')`;
-      previewVehicle.style.backgroundSize = 'contain';
-      previewVehicle.style.backgroundRepeat = 'no-repeat';
-      previewVehicle.style.backgroundPosition = 'center';
-      previewVehicle.style.filter = `drop-shadow(0 0 0 ${currentVehicle.color}) saturate(200%) brightness(80%)`;
-      previewVehicle.style.position = 'relative';
-
-      if (currentVehicle.size === 'small') {
-          previewVehicle.style.width = '50%';
-          previewVehicle.style.height = '50%';
-      } else if (currentVehicle.size === 'medium') {
-          previewVehicle.style.width = '75%';
-          previewVehicle.style.height = '75%';
-      } else {
-          previewVehicle.style.width = '100%';
-          previewVehicle.style.height = '100%';
-      }
-
-      previewEl.appendChild(previewVehicle);
-  }
         }
 
 
@@ -1038,6 +1052,17 @@ function startPlanningPhase() {
 
   console.log("starting planning phase"); 
 
+  const allVehicleTypes = [
+    'car_small', 'car_medium', 'car_big',
+    'truck_small', 'truck_medium', 'truck_big',
+    'new_truck_small', 'new_truck_big'
+  ];
+  
+  allVehicleTypes.forEach(key => {
+    vehicleColorQueues[key] = shuffleArray(COLOR_PALETTE.slice());
+  });
+  
+
   // hiding score bar
   const headerBar = document.querySelector('.header-bar');
   if (headerBar) {
@@ -1122,12 +1147,26 @@ function createPlanningTrial() {
   // Similar to createTrial but for planning phase
   // Use the randomized vehicle queue
   const vehicleData = vehicleTrialQueue[currentTrial - 1];
-  currentVehicle.type = vehicleData.type;
-  currentVehicle.size = vehicleData.size;
-  currentVehicle.keys = vehicleData.keys;
   
-  // New color for phase 2
-  currentVehicle.color = '#' + Math.floor(Math.random()*16777215).toString(16);
+  const key = `${vehicleData.type}_${vehicleData.size}`;
+  let queue = vehicleColorQueues[key];
+
+  if (!queue || queue.length === 0) {
+    queue = shuffleArray(COLOR_PALETTE.slice());
+    vehicleColorQueues[key] = queue;
+  }
+
+  const color = queue.shift();
+
+
+  currentVehicle = {
+    type: vehicleData.type,
+    size: vehicleData.size,
+    keys: vehicleData.keys,
+    color: color,
+    x: 0, // will be set in resetGrid
+    y: 0
+  };
   
   // Reset grid
   resetGrid();
@@ -1135,6 +1174,7 @@ function createPlanningTrial() {
   // Update vehicle info display
   updateVehicleInfo();
   console.log(`Planning Phase - Vehicle: ${currentVehicle.type}, Size: ${currentVehicle.size}`);
+  renderVehiclePreview(); 
 
   
   // Start trial timer

@@ -3,7 +3,6 @@ function startPracticeTrial() {
     console.log('Starting practice phase');
     currentPhase = 0;
     currentTrial = 1;
-
     const smallCar = VEHICLE_TYPES.CAR_SMALL;
 
     currentVehicle = {
@@ -14,10 +13,10 @@ function startPracticeTrial() {
             left: smallCar.leftKey,
             right: smallCar.rightKey,
         },
+        color: 'red',
         x: GRID_SIZE -1,
         y: 0
     };
-
 
     rewards = [
         { x: 1, y: 1 },
@@ -29,13 +28,9 @@ function startPracticeTrial() {
         { x: 2, y: 2 }
       ];
 
-
-
     gridWorld = Array.from({ length: GRID_SIZE }, () =>
         Array.from({ length: GRID_SIZE }, () => 'empty')
     );
-    
-
 
     // Place rewards
     rewards.forEach(pos => {
@@ -48,6 +43,7 @@ function startPracticeTrial() {
     });
 
     createGameUI();
+    renderVehiclePreview();
     renderGrid();
     updateVehicleInfo();
     inputEnabled = false;
@@ -79,8 +75,7 @@ function showPracticeInstructions() {
             </div>
         </div>
     `;
-    document.querySelector('.game-container').appendChild(overlay);
-    
+    document.querySelector('.game-container').appendChild(overlay);  
     document.getElementById('start-practice-btn').addEventListener('click', () => {
         overlay.remove();
         inputEnabled = true;
@@ -88,7 +83,6 @@ function showPracticeInstructions() {
     
 }
     
-
 function endPracticeTrial() {
     // small delay before showing questions
     setTimeout(() => {
@@ -134,7 +128,6 @@ function showPracticeQuestions() {
 }
 
 let practiceAnswers = {};
-
 function checkAnswer(qNum, choice) {
     // Disable all buttons for this question
     const allButtons = document.querySelectorAll(`button[data-question='${qNum}']`);
@@ -151,7 +144,6 @@ function checkAnswer(qNum, choice) {
     };
 
     const isCorrect = correctAnswers[qNum] === choice;
-
     if (isCorrect) {
         clickedBtn.style.backgroundColor = 'green';
         clickedBtn.style.color = 'white';

@@ -1,5 +1,4 @@
 // teleprompterTrial.js
-
 function startTeleprompterSimulation() {
     console.log('Starting teleprompter simulation');
 
@@ -26,7 +25,6 @@ function startTeleprompterSimulation() {
     `;
 
     container.appendChild(overlay);
-
     document.getElementById('start-teleprompter').addEventListener('click', () => {
         overlay.remove();
         showTeleprompterScroll();
@@ -69,9 +67,6 @@ function showTeleprompterScroll() {
     container.appendChild(recordingIndicator);
     container.appendChild(teleprompter);
 
-
-
-
     const text = document.createElement('div');
     text.innerHTML = `
       Welcome to this simulation. The purpose of this task is to practice speaking clearly and steadily. 
@@ -99,7 +94,6 @@ function showTeleprompterScroll() {
     const duration = 20000; // 20 seconds scroll time
     //const distance = teleprompter.offsetHeight + text.offsetHeight;
     const distance = teleprompter.offsetHeight + text.offsetHeight + 50;
-
 
     function step(timestamp) {
         if (!start) start = timestamp;
