@@ -4,7 +4,6 @@ function startTeleprompterSimulation() {
 
     const container = document.querySelector('.game-container');
     container.innerHTML = '';
-
     const overlay = document.createElement('div');
     overlay.className = 'message-overlay';
 
@@ -81,10 +80,12 @@ function showTeleprompterScroll() {
     text.style.position = 'absolute';
     text.style.bottom = '-100%';
     text.style.width = '100%';
-    //text.style.whiteSpace = 'normal';  // ✅ allows wrapping
-    //text.style.wordWrap = 'break-word'; // ✅ fallback
     text.style.whiteSpace=  'pre-line';  // keep line-breaks but allow wrapping at spaces
-    text.style.wordBreak= 'normal'      // prevents mid-word splits
+    text.style.wordBreak= 'break-word'      // prevents mid-word splits
+    text.style.overflowWrap = 'break-word'
+    text.style.display ='block';
+    text.style.boxSizing = 'border-box';
+    text.style.paddingRight = '30px';
 
     teleprompter.appendChild(text);
     container.appendChild(teleprompter);
@@ -112,7 +113,6 @@ function showTeleprompterScroll() {
 
 function showContinueButton() {
     const container = document.querySelector('.game-container');
-
     const button = document.createElement('button');
     button.textContent = 'Continue to Practice Trial';
     button.style.marginTop = '30px';
