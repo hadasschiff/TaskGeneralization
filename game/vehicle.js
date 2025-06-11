@@ -1,11 +1,11 @@
-// colorSVG.js
+// vehicle.js
 
 /* icons.js  ─────────────────────────────────────────────
    Store each vehicle’s SVG once, as a data-URL that uses
    fill="currentColor" so it auto-inherits CSS color.   */
    const VEHICLE_ICONS = {
     car:
-      'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjgwMCIgdmlld0JveD0iMCAwIDUwIDUwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgoKICA8IS0tIDEuIEZ1bGwgY2FyIGJvZHkgc2lsaG91ZXR0ZSAtLT4KICA8ZyBpZD0iYm9keSIgZmlsbD0iY3VycmVudENvbG9yIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+CiAgICA8cGF0aCBkPSIgTTE1LDEyIEMxMCwxMiA2LjUsMTQuNSA1LDE4IEw0LDIyIEMyLjUsMjMgMS41LDI1IDEuNSwyOSBWMzUgSDQ1IFYyOSBMNDgsMjQgQzQ3LDIyIDQ1LjUsMjIgNDUuNSwyMiBMMzUuNSwyMSBMMzMsMTUgQzMyLjUsMTQgMzIsMTQgMzIsMTQgTDI5LDEyIFoiLz4KICA8L2c+Cgo8IS0tIFdpbmRvd3MgLS0+CjxnIGlkPSJ3aW5kb3dzIiBmaWxsPSJ3aGl0ZSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIwLjgiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+CgogIDwhLS0gTGVmdCB3aW5kb3cgLS0+CiAgPHBhdGggZD0iTTgsMjIgUTgsMTQgMTYsMTQgSDIzIFYyMiBaIi8+CgogIDwhLS0gUmlnaHQgd2luZG93IC0tPgogIDxwYXRoIGQ9Ik0yNSwyMiBWMTQgSDI4IFEzMiwxNCAzMywyMiBaIi8+CjwvZz4KCgo8IS0tIDMuIFdoZWVscyAtLT4KICAgPGcgaWQ9IndoZWVscyIgZmlsbD0id2hpdGUiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj4KICAgICAgPGNpcmNsZSBjeD0iMTIiIGN5PSIzNiIgcj0iNCIvPgogICAgIDxjaXJjbGUgY3g9IjM4IiBjeT0iMzYiIHI9IjQiLz4KICAgPC9nPgo8L3N2Zz4=',
+       'data:image/svg+xml;utf8,<svg width="800" height="800" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg"><g id="body" fill="currentColor" stroke="black" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M35,12 C40,12 43.5,14.5 45,18 L46,22 C47.5,23 48.5,25 48.5,29 V35 H1 V29 L2,24 C3,22 4.5,22 4.5,22 L14.5,21 L17,15 C17.5,14 18,14 18,14 L21,12 Z"/></g><g id="windows" fill="white" stroke="black" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"><path d="M42,22 Q42,14 34,14 H27 V22 Z"/><path d="M25,22 V14 H22 Q18,14 17,22 Z"/></g><g id="wheels" fill="white" stroke="black" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><circle cx="38" cy="36" r="4"/><circle cx="12" cy="36" r="4"/></g></svg>',
     truck:
       'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwcHgiIGhlaWdodD0iODAwcHgiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KCiAgPCEtLSBDYXJnbyBCb3ggLS0+CiAgPGcgaWQ9ImNhcmdvIj4KICAgIDxyZWN0IHg9IjIiIHk9IjEzIiB3aWR0aD0iMjciIGhlaWdodD0iMzIiIHJ4PSIyIiByeT0iMiIgZmlsbD0iY3VycmVudENvbG9yIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjIiLz4KICA8L2c+Cgo8IS0tIENhYiAobG93ZXJlZCBzdHlsZSkgLS0+CjxnIGlkPSJjYWIiPgogIDxwYXRoIGQ9Ik0yOSAyM0gzOVE0MSAyMyA0MyAyNUw0OSAzMlE1MCAzMy41IDUwIDM2VjQyUTUwIDQzLjUgNDguNSA0NUgzMVYyNlEzMSAyMyAzNCAyM1oiCiAgICBmaWxsPSJjdXJyZW50Q29sb3IiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMiIvPgo8L2c+Cgo8IS0tIFdpbmRvdyAtLT4KPGcgaWQ9IndpbmRvdyI+CiAgPHBhdGgKICAgIGQ9Ik0zOSAyN0wzOSAzMlEzOSAzMyA0MCAzM0g0OFE0NiAzMC41IDQ0LjUgMjguNUw0MiAyNlE0MSAyNSA0MCAyNUg0MFEzOSAyNS4yIDM5IDI3WiIKICAgIGZpbGw9IndoaXRlIgogICAgc3Ryb2tlPSJibGFjayIKICAgIHN0cm9rZS13aWR0aD0iMiIKICAvPgo8L2c+CgogIDwhLS0gV2hlZWxzIC0tPgogIDxnIGlkPSJ3aGVlbHMiPgogICAgPGNpcmNsZSBjeD0iMTMiIGN5PSI0NCIgcj0iNSIgZmlsbD0id2hpdGUiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMyIvPgogICAgPGNpcmNsZSBjeD0iMzkiIGN5PSI0NCIgcj0iNSIgZmlsbD0id2hpdGUiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMyIvPgogIDwvZz4KPC9zdmc+',
     new_truck:
@@ -27,10 +27,6 @@
     return 'data:image/svg+xml;utf8,' + encodeURIComponent(colored);
   }
   
-
-
-
-
 
 function loadColoredSvg(svgPath, color, targetFill = 'pink') {
     return fetch(svgPath)
@@ -62,17 +58,16 @@ function loadColoredSvg(svgPath, color, targetFill = 'pink') {
     //   });
   
 
-    // Get the base inline SVG (as data URL)
-    if (!VEHICLE_ICONS[currentVehicle.type]) {
-      console.error(`Unknown vehicle type: "${currentVehicle.type}"`);
-      return;
-    }
+    loadColoredSvg(`/vehicles/${currentVehicle.type}.svg`, currentVehicle.color)
+    .then(coloredUrl => {
+      previewVehicle.style.backgroundImage = `url(${coloredUrl})`;
+    });
+  
     
+    //const svgBase = VEHICLE_ICONS[currentVehicle.type];
+    //const svgColored = loadColoredSvgFromUrl(svgBase, currentVehicle.color || 'pink');
 
-    const svgBase = VEHICLE_ICONS[currentVehicle.type];
-    const svgColored = loadColoredSvgFromUrl(svgBase, currentVehicle.color || 'pink');
-
-    previewVehicle.style.backgroundImage = `url("${svgColored}")`;
+    //previewVehicle.style.backgroundImage = `url("${svgColored}")`;
   
     previewVehicle.style.backgroundSize = 'contain';
     previewVehicle.style.backgroundRepeat = 'no-repeat';
