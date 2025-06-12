@@ -818,12 +818,31 @@ function updateVehicleInfo() {
     // </p>`;
 
     movementInstructionsEl.innerHTML = `
+  <h3 class="keys-title">Keys</h3>
+
   <div class="key-diamond">
-    <div class="key up"><kbd>${currentVehicle.keys.up.toUpperCase()}</kbd></div>
-    <div class="key left"><kbd>${currentVehicle.keys.left.toUpperCase()}</kbd></div>
-    <div class="key right"><kbd>${currentVehicle.keys.right.toUpperCase()}</kbd></div>
-    <div class="key down"><kbd>${currentVehicle.keys.down.toUpperCase()}</kbd></div>
-  </div>`;
+    <div class="key up">
+      <kbd>${currentVehicle.keys.up.toUpperCase()}</kbd>
+      <span class="key-name">Up</span>
+    </div>
+
+    <div class="key left">
+      <kbd>${currentVehicle.keys.left.toUpperCase()}</kbd>
+      <span class="key-name">Left</span>
+    </div>
+
+    <div class="key right">
+      <kbd>${currentVehicle.keys.right.toUpperCase()}</kbd>
+      <span class="key-name">Right</span>
+    </div>
+
+    <div class="key down">
+      <kbd>${currentVehicle.keys.down.toUpperCase()}</kbd>
+      <span class="key-name">Down</span>
+    </div>
+  </div>
+`;
+
 
     movementInstructionsEl.style.display = 'block';
     planningControlsEl.style.display = 'none';
