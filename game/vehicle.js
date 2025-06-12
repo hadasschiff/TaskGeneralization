@@ -73,7 +73,7 @@ function loadColoredSvg(svgPath, color, targetFill = 'pink') {
     previewVehicle.style.backgroundRepeat = 'no-repeat';
     previewVehicle.style.backgroundPosition = 'center';
     previewVehicle.style.filter = `drop-shadow(0 0 0 ${currentVehicle.color || 'pink'}) saturate(200%) brightness(80%)`;
-    previewVehicle.style.position = 'relative';
+    // previewVehicle.style.position = 'relative';
   
     if (currentVehicle.size === 'small') {
       previewVehicle.style.width = '50%';

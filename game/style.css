@@ -89,13 +89,16 @@ input[type="text"] {
 
 .game-grid-outer-container {
     display: flex;
+    display: inline-block;
     width: 100%;
+    /* width: auto; */
     flex: 1 0 auto;
     justify-content: center;
     align-items: center;
     padding-top: 20px;
     position: relative;
     margin-left: auto;
+    position: relative;
 }
 
 .game-grid-inner-container {
@@ -125,6 +128,13 @@ input[type="text"] {
     align-items: center;
     font-size: calc(1.5rem + 1vw);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.grid-and-controls {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 24px;
 }
 
 .fade-overlay {
@@ -171,17 +181,20 @@ input[type="text"] {
     z-index: 1;
     align-items: center;
     min-height: auto;
-    gap: 10px;
-}
-
-#controls-info p {
-    margin: 0;
-    font-size: 18px;
-    font-weight: bold;
-    color: #020814;
+    gap: 10px; 
+     
+    /* min-width: 150px;
+    padding: 18px 14px;
+    background: #1e3c72;
+    color: #fff;
+    border-radius: 10px;
+    font-size: 22px;
+    font-weight: 700;
     line-height: 1.4;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    text-align: center; */
+    
 }
-
 
 .message-overlay {
     position: absolute;
@@ -239,16 +252,23 @@ input[type="text"] {
     top: 10px;
     /* margin-left: auto; */
     display: flex;
+    align-items: center;
     justify-content: center;
     background-color: #f8f8f8;
     border: 2px solid #ccc;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    margin-top: 40px;
 
 }
 
 .grid-wrapper {
-    flex-shrink: 0;
+    /* flex-shrink: 0; */
+    flex:1;                      /* take remaining space */
+    /* display:flex; */
+    justify-content:center;      /* <-- centres the maze horizontally  */
+    position: relative;
+    display:inline-block;      /* shrink-wraps to the grid size   */
 }
 
 .planning-controls {
@@ -332,3 +352,102 @@ input[type="text"] {
     50% { opacity: 0.1; }
   }
   
+  .main-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .left-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .sidebar {
+    min-width: 220px;
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  #movement-instructions p {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+
+  /* put these either in style.css or inject once via <style> */
+.game-layout{
+    display:flex;
+    align-items:flex-start;
+    gap: 32px;      /* space between columns */
+    margin-top:20px;
+  }
+  
+  /* Base panel styling */
+#controls-info{
+    min-width:220px;
+    position: absolute;
+    left:24px;              
+    top:50%;              /* you can tweak this for vertical spacing   */
+    transform:translateY(-50%);
+    font-size:20px;
+    font-weight:600;
+    line-height:1.5;
+    right: 100%;
+    margin-right: 12px;
+  }
+  
+  /* The sentence itself */
+  #controls-info p{
+    margin:0;
+    font-size:18px;     /* you can keep or drop if 20 px above is okay */
+    font-weight:700;    /* slightly bolder than the 600 on the parent */
+    color:#020814;
+    line-height:1.4;
+  }
+  
+  /* Make the individual keys look like key-caps */
+  #controls-info kbd{
+    display:inline-block;
+    padding:4px 8px;
+    border:2px solid #1e3c72;
+    border-radius:4px;
+    background:#f0f6ff;
+    font-family:inherit;
+    margin:0 2px;
+  }
+  
+  /*-------------------------*
+ |   diamond key display   |
+ *-------------------------*/
+.key-diamond{
+    position:relative;
+    width:170px;              /* tweak overall size here                */
+    height:160px;
+    margin:0 0 12px 0; 
+    margin-left: 34px;       /* bottom gap from top bar                */
+}
+
+.key-diamond .key{
+    position:absolute;
+    width:48px;               /* square key-caps                        */
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:2px solid #1e3c72; /* carries your existing colours          */
+    border-radius:6px;
+    background:#f0f6ff;
+    font-size:20px;
+    font-weight:600;
+}
+
+/*   ┌── Up ──┐       */
+.key-diamond .up   { top:0;           left:50%; transform:translate(-50%,0); }
+
+/*  Left  Right        */
+.key-diamond .left { top:50%;         left:0;   transform:translate(0,-50%); }
+.key-diamond .right{ top:50%;         right:0;  transform:translate(0,-50%); }
+
+/*   └─ Down ─┘        */
+.key-diamond .down { bottom:0;        left:50%; transform:translate(-50%,0); }

@@ -196,36 +196,76 @@ function createGameUI() {
   
   // Create game UI structure
   console.log('Creating the game UI');
-  container.innerHTML = `
-      <div class="header-bar">
-          <div class="score-group">
-              <div class="score">Score: <span id="score">0</span></div>
+  // container.innerHTML = `
+  //     <div class="header-bar">
+  //         <div class="score-group">
+  //             <div class="score">Score: <span id="score">0</span></div>
+  //           <div class="score">✅ Successes: <span id="success-count">0</span></div>
+  //           <div class="score">❌ Failures: <span id="failure-count">0</span></div>
+  //         </div>
+  //     </div> 
+      
+  //     <div class="game-grid-outer-container">
+
+  //         <div class="game-grid-inner-container">
+  //             <div id="game-grid"></div>
+  //         </div>
+  //         <div id="vehicle-display" class="vehicle-display"></div>
+  //     </div>
+      
+  //     <div class="controls-container">
+  //         <div id="controls-info">
+  //           <div id="movement-instructions"></div>
+  //           <div id="planning-controls" style="display: none;">
+  //             <p><strong>plan your 4 moves!</strong> Enter your move sequence below:</p>
+  //             <div class="planning-input">
+  //               <input type="text" id="move-sequence" placeholder="e.g. uujjzx">
+  //               <button id="submit-plan">Submit</button>
+  //             </div>
+  //           </div>
+  //         </div>
+  //       </div>
+  //   `;
+
+
+
+
+    container.innerHTML = `
+    <div class="header-bar">
+        <div class="score-group">
+            <div class="score">Score: <span id="score">0</span></div>
             <div class="score">✅ Successes: <span id="success-count">0</span></div>
             <div class="score">❌ Failures: <span id="failure-count">0</span></div>
+        </div>
+    </div>
+  
+    <!-- ⭐ NEW FLEX WRAPPER ⭐ -->
+    <div class="game-layout">
+        <!-- 1.  Key panel  -->
+        <div id="controls-info" class="controls-info">
+            <div id="movement-instructions"></div>
+            <div id="planning-controls" style="display:none">
+                <p><strong>Plan your 4 moves!</strong></p>
+                <div class="planning-input">
+                    <input id="move-sequence" placeholder="e.g. wasd">
+                    <button id="submit-plan">Submit</button>
+              </div>
           </div>
-      </div> 
-      
-      <div class="game-grid-outer-container">
+      </div>
 
+      <!-- Maze wrapper  (flex-grow:1) -->
+      <div class="grid-wrapper">
           <div class="game-grid-inner-container">
               <div id="game-grid"></div>
           </div>
-          <div id="vehicle-display" class="vehicle-display"></div>
       </div>
-      
-      <div class="controls-container">
-          <div id="controls-info">
-            <div id="movement-instructions"></div>
-            <div id="planning-controls" style="display: none;">
-              <p><strong>plan your 4 moves!</strong> Enter your move sequence below:</p>
-              <div class="planning-input">
-                <input type="text" id="move-sequence" placeholder="e.g. uujjzx">
-                <button id="submit-plan">Submit</button>
-              </div>
-            </div>
-          </div>
-        </div>
-    `;
+
+      <!-- 3.  Vehicle preview -->
+      <div id="vehicle-display" class="vehicle-display"></div>
+  </div>
+`;
+  
+
 }
 
 // Setup keyboard event listeners
@@ -769,13 +809,22 @@ function updateVehicleInfo() {
   if (currentPhase === 1 || currentPhase === 0) {
     console.log('Showing control keys');
     // Phase 1 (learning) - show movement instructions
+    // movementInstructionsEl.innerHTML = `
+    //   <p style="margin: 0; font-size: 18px; font-weight: bold; color: #020814;">
+    //   Up: ${currentVehicle.keys.up.toUpperCase()} | 
+    //   Down: ${currentVehicle.keys.down.toUpperCase()} | 
+    //   Left: ${currentVehicle.keys.left.toUpperCase()} | 
+    //   Right: ${currentVehicle.keys.right.toUpperCase()}
+    // </p>`;
+
     movementInstructionsEl.innerHTML = `
-      <p style="margin: 0; font-size: 18px; font-weight: bold; color: #020814;">
-      Up: ${currentVehicle.keys.up.toUpperCase()} | 
-      Down: ${currentVehicle.keys.down.toUpperCase()} | 
-      Left: ${currentVehicle.keys.left.toUpperCase()} | 
-      Right: ${currentVehicle.keys.right.toUpperCase()}
-    </p>`;
+  <div class="key-diamond">
+    <div class="key up"><kbd>${currentVehicle.keys.up.toUpperCase()}</kbd></div>
+    <div class="key left"><kbd>${currentVehicle.keys.left.toUpperCase()}</kbd></div>
+    <div class="key right"><kbd>${currentVehicle.keys.right.toUpperCase()}</kbd></div>
+    <div class="key down"><kbd>${currentVehicle.keys.down.toUpperCase()}</kbd></div>
+  </div>`;
+
     movementInstructionsEl.style.display = 'block';
     planningControlsEl.style.display = 'none';
   
