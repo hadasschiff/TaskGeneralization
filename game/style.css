@@ -445,29 +445,6 @@ input[type="text"] {
     
 }
 
-.key-diamond .key{
-    position:absolute;
-    width:48px;               /* square key-caps                        */
-    height:48px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border:2px solid #1e3c72; /* carries your existing colours          */
-    border-radius:6px;
-    background:#f0f6ff;
-    font-size:20px;
-    font-weight:600;
-}
-
-/*   ┌── Up ──┐       */
-.key-diamond .up   { top:0;           left:50%; transform:translate(-50%,0); }
-
-/*  Left  Right        */
-.key-diamond .left { top:50%;         left:0;   transform:translate(0,-50%); }
-.key-diamond .right{ top:50%;         right:0;  transform:translate(0,-50%); }
-
-/*   └─ Down ─┘        */
-.key-diamond .down { bottom:0;        left:50%; transform:translate(-50%,0); }
 
 
 .keys-title{
@@ -494,3 +471,27 @@ input[type="text"] {
     left:50%;
     transform:translateX(-50%);
   }
+
+  .key-diamond .key{
+    position:absolute;
+    width:48px;               /* square key-caps                        */
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:2px solid #1e3c72; /* carries your existing colours          */
+    border-radius:6px;
+    background:#f0f6ff;
+    font-size:20px;
+    font-weight:600;
+}
+
+/*   ┌── Up ──┐       */
+.key-diamond .up   { top:0;           left:50%; transform:translate(-50%,0); }
+
+/*  Left  Right        */
+.key-diamond .left { top:50%;         left:0;   transform:translate(0,-50%); }
+.key-diamond .right{ top:50%;         right:0;  transform:translate(0,-50%); }
+
+/*   └─ Down ─┘        */
+.key-diamond .down { bottom:0;        left:50%; transform:translate(-50%,0); }
