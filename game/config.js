@@ -5,6 +5,15 @@ const GRID_SIZE = 3;
 const LEARNING_TRIALS = 1; // change after to 20
 const PLANNING_TRIALS = 2; // change after to 10
 
+// number of trials
+const LEARN_POOL_SIZE = 4; // change after to 80
+const PLAN_POOL_SIZE  = 16; // change after to 80
+
+/* independent seeds so you can regenerate one pool without touching the other */
+const POOL_RNG_LEARN = new Math.seedrandom('maze-learn-v1');
+const POOL_RNG_PLAN  = new Math.seedrandom('maze-plan-v1');
+
+
 // Vehicle types and controls
 const VEHICLE_TYPES = {
   CAR_SMALL: { type: 'car', size: 'small', upKey: 'w', downKey: 's', leftKey: 'a', rightKey: 'd' },

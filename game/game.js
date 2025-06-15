@@ -1,4 +1,113 @@
 //game.js
+
+
+function rInt(rng, n) {
+  return Math.floor(rng() * n);
+}
+
+
+/* pure maze generator that never calls Math.random() */
+function buildMaze(rng) {
+  const g = Array.from({length: GRID_SIZE}, _=>Array(GRID_SIZE).fill('empty'));
+  const start = { x: rInt(rng, GRID_SIZE), y: rInt(rng, GRID_SIZE) };
+
+  const dirs = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
+  const path=[ {...start} ], used=new Set([`${start.x},${start.y}`]);
+  while(path.length<5){
+    const {x,y}=path[path.length-1];
+    const cand=dirs.map(d=>({x:x+d.dx,y:y+d.dy}))
+                   .filter(p=>p.x>=0&&p.x<GRID_SIZE&&p.y>=0&&p.y<GRID_SIZE&&!used.has(`${p.x},${p.y}`));
+    if(!cand.length) break;
+    const nxt=cand[rInt(rng,cand.length)];
+    path.push(nxt); used.add(`${nxt.x},${nxt.y}`);
+  }
+  if(path.length<5) throw Error('path fail');
+
+  const rewards = path.slice(1);
+  rewards.forEach(p=>g[p.y][p.x]='reward');
+
+  return { grid:g, start, rewards }; // no obstacles yet—handled per-vehicle later
+}
+
+/* build once, identical for all players */
+const LEARN_POOL = Array.from({ length: LEARN_POOL_SIZE }, (_, i) => {
+  const m = buildMaze(POOL_RNG_LEARN);
+  m.id    = 'L-' + i;          // L-0 … L-79 (or L-11 in dev)
+  return m;
+});
+
+
+const PLAN_POOL  = Array.from({ length: PLAN_POOL_SIZE  }, (_, i) => {
+  const m = buildMaze(POOL_RNG_PLAN);
+  m.id    = 'P-' + i;          // P-0 … P-79
+  return m;
+});
+
+
+
+/* per-session shuffle orders */
+function shuffleOnce(a){
+  const c=[...a]; for(let i=c.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[c[i],c[j]]=[c[j],c[i]];}
+  return c;
+}
+const learnOrder = shuffleOnce([...LEARN_POOL.keys()]);
+const planOrder  = shuffleOnce([...PLAN_POOL.keys()]);
+
+console.log('Learning order for this session:', learnOrder.map(i => 'L-' + i));
+console.log('Planning order for this session:', planOrder.map(i => 'P-' + i));
+
+
+/* loader that copies a maze layout into live state */
+function loadMazeFrom(pool, order, idx){
+  
+  const m = pool[ order[idx] ];
+  console.log(`Loading from pool:`, pool.map(m => m.id), `order:`, order);
+
+  if (!m) {
+    console.error("Invalid maze lookup:", { idx, order, pool, poolLength: pool.length });
+    throw new Error("Maze not found in pool");
+  }
+  console.log(`Loaded maze ${m.id}  (trial ${idx + 1} / ${order.length}, phase ${currentPhase})`);
+  
+  gridWorld = m.grid.map(r=>[...r]);
+  rewards   = m.rewards.map(r=>({...r}));
+  obstacles = [];                              // (filled below if truck)
+  currentVehicle.x = m.start.x;
+  currentVehicle.y = m.start.y;
+
+  const startX = m.start.x;
+  const startY = m.start.y;
+
+  /* vehicle-specific extras */
+  if (vehicleAllowsObstacles(currentVehicle)) {
+    // three fresh obstacles, deterministic per trial but fine with Math.random()
+    while(obstacles.length<3){
+      const ox=Math.floor(Math.random()*GRID_SIZE);
+      const oy=Math.floor(Math.random()*GRID_SIZE);
+      if(gridWorld[oy][ox]!=='empty') continue;
+      if (ox === startX && oy === startY)     continue;     // avoid start tile
+
+      obstacles.push({x:ox,y:oy}); 
+      gridWorld[oy][ox]='obstacle';
+    }
+  } else {
+    // one terminator tile
+    let placed=false;
+    while(!placed){
+      const tx=Math.floor(Math.random()*GRID_SIZE);
+      const ty=Math.floor(Math.random()*GRID_SIZE);
+      if(gridWorld[ty][tx]!=='empty') continue;
+      if (tx === startX && ty === startY)     continue;
+
+      gridWorld[ty][tx]='terminator';
+      placed=true;
+    }
+  }
+
+  renderGrid();
+}
+
+
 function shuffleArray(arr) {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {
@@ -479,7 +588,9 @@ function createTrial() {
   }
 
   // Reset maze and place vehicle at random position
-  resetGrid();
+  //resetGrid();
+  loadMazeFrom(LEARN_POOL, learnOrder, currentTrial - 1);
+
 
   // Update vehicle info display
   updateVehicleInfo();
@@ -693,7 +804,7 @@ function renderGrid() {
           if (x === currentVehicle.x && y === currentVehicle.y) {
               const vehicle = document.createElement('div');
               vehicle.className = 'vehicle-image';
-              console.log(currentVehicle.color);
+              console.log(`using color: ${currentVehicle.color}`);
               loadColoredSvg(`/vehicles/${currentVehicle.type}.svg`, currentVehicle.color)
                 .then(coloredUrl => {
                   vehicle.style.backgroundImage = `url(${coloredUrl})`;
@@ -1109,9 +1220,13 @@ function continueToNextTrial() {
       // Start next trial
       currentTrial++;
       console.log(`Moving to trial ${currentTrial}`);
-      createTrial();
-      }
+  if (currentPhase === 2) {
+    createPlanningTrial();
+  } else {
+    createTrial();
   }
+}
+}
 
 // Start the planning phase (Phase 2)
 function startPlanningPhase() {
@@ -1226,7 +1341,6 @@ function createPlanningTrial() {
 
   const color = queue.shift();
 
-
   currentVehicle = {
     type: vehicleData.type,
     size: vehicleData.size,
@@ -1237,8 +1351,10 @@ function createPlanningTrial() {
   };
   
   // Reset grid
-  resetGrid();
-  
+  //resetGrid();
+  loadMazeFrom(PLAN_POOL, planOrder, currentTrial - 1);
+
+
   // Update vehicle info display
   updateVehicleInfo();
   console.log(`Planning Phase - Vehicle: ${currentVehicle.type}, Size: ${currentVehicle.size}`);
