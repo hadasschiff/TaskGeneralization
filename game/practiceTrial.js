@@ -1,6 +1,6 @@
 // practiceTrial.js
 function startPracticeTrial() {
-    console.log('Starting practice phase');
+    //console.log('Starting practice phase');
     currentPhase = 0;
     currentTrial = 1;
     const smallCar = VEHICLE_TYPES.CAR_SMALL;
@@ -61,7 +61,7 @@ function startPracticeTrial() {
 }
 
 function showPracticeInstructions() {
-    console.log('Showing practice instructions');
+    //console.log('Showing practice instructions');
     const overlay = document.createElement('div');
     overlay.className = 'message-overlay';
     overlay.innerHTML = `
@@ -91,7 +91,7 @@ function endPracticeTrial() {
 }
 
 function showPracticeQuestions() {
-    console.log('Practice Quiz');
+    //console.log('Practice Quiz');
     inputEnabled = false;
 
     const container = document.querySelector('.game-container');
@@ -159,7 +159,6 @@ function checkAnswer(qNum, choice) {
 
     // Save answer
     practiceAnswers[qNum] = choice;
-
     const feedback = document.getElementById('quiz-feedback');
     if (Object.keys(practiceAnswers).length === 3) {
         feedback.innerHTML = `

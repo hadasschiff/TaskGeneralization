@@ -1,7 +1,5 @@
 // teleprompterTrial.js
 function startTeleprompterSimulation() {
-    console.log('Starting teleprompter simulation');
-
     const container = document.querySelector('.game-container');
     container.innerHTML = '';
     const overlay = document.createElement('div');
@@ -128,7 +126,6 @@ function showContinueButton() {
     button.style.marginRight = 'auto';
 
     button.addEventListener('click', () => {
-        //overlay.remove()
         createGameUI();
         startPracticeTrial();
     });

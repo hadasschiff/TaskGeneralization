@@ -1,10 +1,5 @@
-/**
- * Opening Slide for the Vehicle Navigation Game
- * Handles the welcome screen functionality and starting the game
- */
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Opening slide loaded');
     
     // Ensure the start button is properly connected
     const startButton = document.querySelector('.start-btn');
@@ -21,11 +16,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-/**
- * Starts the game when the start button is clicked
- */
+//Starts the game when the start button is clicked
 function startGame() {
-    console.log('Start button pressed');   
     // Trigger game initialization function from game.js
     if (typeof initializeGame === 'function') {
         // Fade out the opening slide
