@@ -1010,9 +1010,9 @@ function showTrialResults() {
       setTimeout(() => {
         fadeOverlay.remove();
         inputEnabled = true;
-      }, 500);
+      }, 400);
     } ,100);
-  }, 500);
+  }, 400);
 }
   
 // Continue to the next trial or phase

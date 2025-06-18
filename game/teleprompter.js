@@ -6,10 +6,10 @@ function startTeleprompterSimulation() {
     overlay.className = 'message-overlay';
 
     overlay.innerHTML = `
-      <div class="message-box" style="font-family: 'Segoe UI', sans-serif; padding: 36px 40px; max-width: 700px; margin: auto; text-align: left;">
+    <div class="message-box" style="font-family: 'Segoe UI', sans-serif; padding: 36px 40px; max-width: 700px; margin: auto; text-align: left;">
         <h2 style="color: #1e3c72; text-align: left;">Public Speaking Simulation</h2>
         <p style="text-align: left;">
-        This is a short simulation of the public speaking task you will face later. You’ll read from a teleprompter just like in the actual task.</p>
+        This is a brief simulation of the public speaking task you'll complete later. You'll read from a teleprompter, just like in the actual task. On the right, a simulated live chat will show examples of the kinds of comments you might receive during the real task.</p>
         <p style="text-align: left;">
         When you click "Start Practice", the teleprompter will scroll automatically. Read the text aloud as it appears.</p>
 
@@ -33,38 +33,18 @@ function showTeleprompterScroll() {
     container.innerHTML = '';
 
     const teleprompter = document.createElement('div');
-    teleprompter.style.position = 'relative';
-    teleprompter.style.height = '450px';
-    teleprompter.style.width = '50%';
-    teleprompter.style.overflow = 'hidden';
-    teleprompter.style.background = '#ffffff';
-    teleprompter.style.border = '2px solid #ccc';
-    teleprompter.style.borderRadius = '12px';
-    teleprompter.style.padding = '30px';
-    teleprompter.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-    teleprompter.style.fontSize = '1.5rem';
-    teleprompter.style.lineHeight = '2';
-    teleprompter.style.color = '#222';
-    teleprompter.style.fontFamily = "'Segoe UI', sans-serif";
-    teleprompter.style.marginTop = '30px';
-
+    teleprompter.className = 'teleprompter-box';
     const recordingIndicator = document.createElement('div');
+    recordingIndicator.className = 'recording-indicator';
     recordingIndicator.innerHTML = ` 
       <span class="recording-dot" style="margin-right: 8px;"></span>
       <span style="font-weight: bold;">Recording  </span> 🎤
      `;
-    recordingIndicator.style.display = 'flex';
-    recordingIndicator.style.alignItems = 'center';
-    recordingIndicator.style.justifyContent = 'center';
-    recordingIndicator.style.fontSize = '20px';
-    recordingIndicator.style.color = '#d11a2a';
-    recordingIndicator.style.fontWeight = 'bold';
-    recordingIndicator.style.marginBottom = '12px';
 
     container.appendChild(recordingIndicator);
     container.appendChild(teleprompter);
-
     const text = document.createElement('div');
+    text.className = 'teleprompter-text';
     text.innerHTML = `
       Welcome to this simulation. The purpose of this task is to practice speaking clearly and steadily. 
       As the text scrolls, please read it aloud at a comfortable pace.
@@ -75,16 +55,6 @@ function showTeleprompterScroll() {
       The actual task will follow a similar structure.
       Thank you for participating in this practice round.
     `;
-    text.style.position = 'absolute';
-    text.style.bottom = '-100%';
-    text.style.width = '100%';
-    text.style.whiteSpace=  'pre-line';  // keep line-breaks but allow wrapping at spaces
-    text.style.wordBreak= 'break-word'      // prevents mid-word splits
-    text.style.overflowWrap = 'break-word'
-    text.style.display ='block';
-    text.style.boxSizing = 'border-box';
-    text.style.paddingRight = '30px';
-
     teleprompter.appendChild(text);
     container.appendChild(teleprompter);
 
@@ -105,10 +75,9 @@ function showTeleprompterScroll() {
             showContinueButton();
         }
     }
-
     requestAnimationFrame(step);
+    startLiveChatSimulation();
 }
-
 function showContinueButton() {
     const container = document.querySelector('.game-container');
     const button = document.createElement('button');
@@ -124,11 +93,53 @@ function showContinueButton() {
     button.style.display = 'block';
     button.style.marginLeft = 'auto';
     button.style.marginRight = 'auto';
-
     button.addEventListener('click', () => {
         createGameUI();
         startPracticeTrial();
     });
-
     container.appendChild(button);
+}
+
+function startLiveChatSimulation() {
+  const chatBox = document.createElement('div');
+  chatBox.className = 'live-chat-box';
+  const inner = document.createElement('div');
+  inner.className = 'chat-content';
+  chatBox.appendChild(inner);
+  const container = document.querySelector('.game-container');
+  container.appendChild(chatBox);
+
+  const fakeUsers = ['Maya', 'Jonas', 'Ali', 'Zoe', 'Ben', 'Chloe', 'Daniel', 'Sarah'];
+  const comments = [
+    "A little louder maybe?",
+    "Looks focused.",
+    "Great pace!",
+    "Eye contact is nice.",
+    "Clear and confident!",
+    "Could be more expressive.",
+    "Nice flow and energy!",
+    "Try to slow down a bit.",
+    "Looking composed!",
+    "Seems a little nervous."
+  ];
+
+  let index = 0;
+  const interval = setInterval(() => {
+    if (index >= comments.length) {
+      clearInterval(interval);
+      return;
+    }
+
+    const user = fakeUsers[Math.floor(Math.random() * fakeUsers.length)];
+    const message = document.createElement('div');
+    message.className = 'chat-message';
+    message.innerHTML = `<strong>${user}</strong>: ${comments[index++]}`;
+    inner.appendChild(message);
+    // scroll to bottom if overflow
+    inner.scrollTop = inner.scrollHeight;
+
+    setTimeout(() => {
+      message.style.opacity = '1';
+    }, 10);
+  }, 2000);
 }
