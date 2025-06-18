@@ -99,21 +99,39 @@ function buildMaze(rng, vehicleType) {
   return { grid: g, start, rewards, optimalDirections, terminator, obstacles, vehicleType };
 }
 
-function makeMazePool(vehiclesqueue, seedPrefix, tag) {
-  return vehiclesqueue.map((vehicle, idx) => {
-    const { type, size } = vehicle;
-    const seed = `${seedPrefix}-${type}-${size}-${idx}`;
-    const localRng = new Math.seedrandom(seed);
-    const maze = buildMaze(localRng, vehicle);   
-    maze.id    = `${tag}-${idx}`;           
-    return maze;
-  });
+function sigOf(maze) {
+  const path = maze.rewards.map(p => `${p.x},${p.y}`).join('|');
+  const obs  = maze.obstacles?.map(p => `${p.x},${p.y}`).sort().join('|') || '';
+  const term = maze.terminator ? `${maze.terminator.x},${maze.terminator.y}` : '';
+  return [path, obs, term].join(' || ');
 }
 
-function shuffleOnce(a){
-  const c=[...a]; for(let i=c.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[c[i],c[j]]=[c[j],c[i]];}
-  return c;
-}
+function makeMazePool(vehiclesqueue, seedPrefix, tag) {
+  const seen = new Set();      // signatures we’ve already produced
+  const pool = [];
+  vehiclesqueue.forEach((vehicle, idx) => {
+    let attempt = 0, maze, sig;
+
+    do {
+      // add “-0”, “-1”, … to the seed until we find a new layout
+      const seed   = `${seedPrefix}-${idx}-${attempt}`;
+      const rng    = new Math.seedrandom(seed);
+      maze = buildMaze(rng, vehicle); 
+      sig  = sigOf(maze);
+      attempt++;
+    } while (seen.has(sig));   
+    seen.add(sig);
+    maze.id = `${tag}-${idx}`;
+    pool.push(maze);
+  });
+
+  return pool;                          
+  }
+
+//function shuffleOnce(a){
+//  const c=[...a]; for(let i=c.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[c[i],c[j]]=[c[j],c[i]];}
+//  return c;
+//}
 //const learnOrder = shuffleOnce([...LEARN_POOL.keys()]);
 //const planOrder  = shuffleOnce([...PLAN_POOL.keys()]);
 
