@@ -46,10 +46,8 @@ function startPracticeTrial() {
     renderVehiclePreview();
     renderGrid();
     updateVehicleInfo();
-    inputEnabled = false;
 
     showPracticeInstructions();
-    inputEnabled = true;       // Allow key presses to affect the game
 
     gameData.practice = [{
         vehicle: currentVehicle,

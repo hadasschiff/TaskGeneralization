@@ -363,7 +363,7 @@ function createGameUI() {
             <div id="planning-controls" style="display:none">
                 <p><strong>Plan your 4 moves!</strong></p>
                 <div class="planning-input">
-                    <input id="move-sequence" placeholder="e.g. wasd">
+                    <input id="move-sequence" placeholder="e.g. wasd" autocomplete="off" />
                     <button id="submit-plan">Submit</button>
               </div>
           </div>
@@ -873,6 +873,7 @@ function moveVehicle(direction) {
   
   // Render updated grid
   renderGrid();
+
 }
 
 // Check for collisions with obstacles or rewards
@@ -1225,7 +1226,7 @@ function submitPlan() {
   //const mazeused =loadMazeFrom(PLAN_POOL, planOrder, currentTrial - 1);
   const mazeused = PLAN_POOL[planOrder[currentTrial - 1]];
   console.log(mazeused);
-  currentTrialData.mazeId = mazeused.id;                // e.g. "P-7"
+  currentTrialData.mazeId = mazeused.id;
   currentTrialData.planOrderIndex = planOrder[currentTrial - 1]; // index used
   currentTrialData.optimalDirections = mazeused.optimalDirections;
 
