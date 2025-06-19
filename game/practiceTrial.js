@@ -1,12 +1,17 @@
 // practiceTrial.js
-function startPracticeTrial() {
-    //console.log('Starting practice phase');
-    currentPhase = 0;
-    currentTrial = 1;
-    const smallCar = VEHICLE_TYPES.CAR_SMALL;
+import * as config from './config.js';
+import { gameState } from './gameState.js';
+import * as game from './game.js';
+import * as vehicle from './vehicle.js';
 
-    currentVehicle = {
-        ...VEHICLE_TYPES.CAR_SMALL,
+
+export function startPracticeTrial() {
+    gameState.currentPhase = 0;
+    gameState.currentTrial = 1;
+    const smallCar = config.VEHICLE_TYPES.CAR_SMALL;
+
+    gameState.currentVehicle = {
+        ...config.VEHICLE_TYPES.CAR_SMALL,
         keys: {
             up: smallCar.upKey,
             down: smallCar.downKey,
@@ -14,43 +19,40 @@ function startPracticeTrial() {
             right: smallCar.rightKey,
         },
         color: 'red',
-        x: GRID_SIZE -1,
+        x: config.GRID_SIZE -1,
         y: 0
     };
 
-    rewards = [
+    gameState.rewards = [
         { x: 1, y: 1 },
         { x: 0, y: 2 }
       ];
       
-      obstacles = [
+      gameState.obstacles = [
         { x: 2, y: 1 },
         { x: 2, y: 2 }
       ];
 
-    gridWorld = Array.from({ length: GRID_SIZE }, () =>
-        Array.from({ length: GRID_SIZE }, () => 'empty')
+    gameState.gridWorld = Array.from({ length: config.GRID_SIZE }, () =>
+        Array.from({ length: config.GRID_SIZE }, () => 'empty')
     );
 
-    // Place rewards
-    rewards.forEach(pos => {
-        gridWorld[pos.y][pos.x] = 'reward';
+    gameState.rewards.forEach(pos => {
+        gameState.gridWorld[pos.y][pos.x] = 'reward';
     });
     
-    // Place obstacles
-    obstacles.forEach(pos => {
-        gridWorld[pos.y][pos.x] = 'obstacle';
+    gameState.obstacles.forEach(pos => {
+        gameState.gridWorld[pos.y][pos.x] = 'obstacle';
     });
 
-    createGameUI();
-    renderVehiclePreview();
-    renderGrid();
-    updateVehicleInfo();
-
+    game.createGameUI();
+    vehicle.renderVehiclePreview();
+    game.renderGrid();
+    game.updateVehicleInfo();
     showPracticeInstructions();
 
-    gameData.practice = [{
-        vehicle: currentVehicle,
+    gameState.gameData.practice = [{
+        vehicle: gameState.currentVehicle,
         startTime: Date.now(),
         moves: [],
         rewardsCollected: 0,
@@ -59,7 +61,6 @@ function startPracticeTrial() {
 }
 
 function showPracticeInstructions() {
-    //console.log('Showing practice instructions');
     const overlay = document.createElement('div');
     overlay.className = 'message-overlay';
     overlay.innerHTML = `
@@ -76,22 +77,18 @@ function showPracticeInstructions() {
     document.querySelector('.game-container').appendChild(overlay);  
     document.getElementById('start-practice-btn').addEventListener('click', () => {
         overlay.remove();
-        inputEnabled = true;
-    });
-    
+        gameState.inputEnabled = true;
+    });   
 }
     
-function endPracticeTrial() {
-    // small delay before showing questions
+export function endPracticeTrial() {
     setTimeout(() => {
         showPracticeQuestions();
     }, 800);
 }
 
 function showPracticeQuestions() {
-    //console.log('Practice Quiz');
-    inputEnabled = false;
-
+    gameState.inputEnabled = false;
     const container = document.querySelector('.game-container');
     container.innerHTML = '';
 
@@ -103,43 +100,43 @@ function showPracticeQuestions() {
             <h2>Practice Quiz</h2>
 
             <p>1. How many moves do you have?</p>
-            <button onclick="checkAnswer(1, 'A')" data-question="1" data-choice="A">A) 4</button>
-            <button onclick="checkAnswer(1, 'B')" data-question="1" data-choice="B">B) Unlimited</button>
-            <button onclick="checkAnswer(1, 'C')" data-question="1" data-choice="C">C) 10</button>
+            <button data-question="1" data-choice="A">A) 4</button>
+            <button data-question="1" data-choice="B">B) Unlimited</button>
+            <button data-question="1" data-choice="C">C) 10</button>
 
             <p>2. What happens when you hit a failure (🔥)?</p>
-            <button onclick="checkAnswer(2, 'A')" data-question="2" data-choice="A">A) You earn points</button>
-            <button onclick="checkAnswer(2, 'B')" data-question="2" data-choice="B">B) It increases your public speaking time</button>
-            <button onclick="checkAnswer(2, 'C')" data-question="2" data-choice="C">C) Nothing</button>
+            <button data-question="2" data-choice="A">A) You earn points</button>
+            <button data-question="2" data-choice="B">B) It increases your public speaking time</button>
+            <button data-question="2" data-choice="C">C) Nothing</button>
 
             <p>3. Which trials determine your outcomes?</p>
-            <button onclick="checkAnswer(3, 'A')" data-question="3" data-choice="A">A) All trials</button>
-            <button onclick="checkAnswer(3, 'B')" data-question="3" data-choice="B">B) Every second trial</button>
-            <button onclick="checkAnswer(3, 'C')" data-question="3" data-choice="C">C) A few randomly selected ones</button>
+            <button data-question="3" data-choice="A">A) All trials</button>
+            <button data-question="3" data-choice="B">B) Every second trial</button>
+            <button data-question="3" data-choice="C">C) A few randomly selected ones</button>
 
             <div id="quiz-feedback" style="margin-top: 20px;"></div>
         </div>
-
     `;
 
     container.appendChild(overlay);
+
+    // ✅ Bind click listeners AFTER inserting the buttons
+    overlay.querySelectorAll('button[data-question]').forEach(button => {
+        button.addEventListener('click', () => {
+            const q = parseInt(button.dataset.question);
+            const c = button.dataset.choice;
+            checkAnswer(q, c);
+        });
+    });
 }
+
 
 let practiceAnswers = {};
 function checkAnswer(qNum, choice) {
-    // Disable all buttons for this question
     const allButtons = document.querySelectorAll(`button[data-question='${qNum}']`);
     allButtons.forEach(btn => btn.disabled = true);
-
-    // Find the clicked button
     const clickedBtn = document.querySelector(`button[data-question='${qNum}'][data-choice='${choice}']`);
-
-    // Correct answers
-    const correctAnswers = {
-        1: 'A',
-        2: 'B',
-        3: 'C'
-    };
+    const correctAnswers = {1: 'A', 2: 'B', 3: 'C'};
 
     const isCorrect = correctAnswers[qNum] === choice;
     if (isCorrect) {
@@ -155,7 +152,6 @@ function checkAnswer(qNum, choice) {
         }
     }
 
-    // Save answer
     practiceAnswers[qNum] = choice;
     const feedback = document.getElementById('quiz-feedback');
     if (Object.keys(practiceAnswers).length === 3) {
@@ -168,10 +164,10 @@ function checkAnswer(qNum, choice) {
 
         document.getElementById('continue-to-game-btn').addEventListener('click', () => {
             document.querySelector('.message-overlay').remove();
-            currentPhase = 1;
-            createGameUI();
-            startLearningPhase();
-            createTrial(); // Proceed to main game
+            gameState.currentPhase = 1;
+            game.createGameUI();
+            game.startLearningPhase();
+            game.createTrial(); 
         });
     }
 }

@@ -1,5 +1,8 @@
+import {createGameUI} from './game.js'
+import {startPracticeTrial} from './practiceTrial.js'
+
 // teleprompterTrial.js
-function startTeleprompterSimulation() {
+export function startTeleprompterSimulation() {
     const container = document.querySelector('.game-container');
     container.innerHTML = '';
     const overlay = document.createElement('div');

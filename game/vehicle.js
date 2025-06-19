@@ -1,4 +1,6 @@
 // vehicle.js
+import { gameState } from './gameState.js';
+
    const VEHICLE_ICONS = {
     car:
        'data:image/svg+xml;utf8,<svg width="800" height="800" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg"><g id="body" fill="currentColor" stroke="black" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M35,12 C40,12 43.5,14.5 45,18 L46,22 C47.5,23 48.5,25 48.5,29 V35 H1 V29 L2,24 C3,22 4.5,22 4.5,22 L14.5,21 L17,15 C17.5,14 18,14 18,14 L21,12 Z"/></g><g id="windows" fill="white" stroke="black" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"><path d="M42,22 Q42,14 34,14 H27 V22 Z"/><path d="M25,22 V14 H22 Q18,14 17,22 Z"/></g><g id="wheels" fill="white" stroke="black" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><circle cx="38" cy="36" r="4"/><circle cx="12" cy="36" r="4"/></g></svg>',
@@ -8,24 +10,10 @@
       'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjgwMCIgdmlld0JveD0iMCAwIDUwIDUwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgoKICA8IS0tIDEuIENhcmdvIGJlZCAtLT4KICA8ZyBpZD0iY2FyZ28iPgogICAgPHBhdGggZD0iTTEsMjUgSDQ1IFYzNSBIMiBBMTAsNiAwIDAgMSAxLDM0IFoiIGZpbGw9ImN1cnJlbnRDb2xvciIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPC9nPgoKICA8IS0tIDIuIENhYiBzaWxob3VldHRlIC0tPgogIDxnIGlkPSJjYWIiPgogICAgPHBhdGggZD0iIE0zMCwxMCBWN0MgMjksNi44OTUgMjkuODk1LDYgMzEsNiBIMzkgQzQxLDYgNDIuNSw3IDQ0LDkgTDQ5LDE2IEM1MCwxOCA1MCwyMCA1MCwyMiBWMzUgSDMxIFoiIGZpbGw9ImN1cnJlbnRDb2xvciIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPC9nPgoKICA8IS0tIDMuIFdpbmRvdyAtLT4KICA8ZyBpZD0id2luZG93Ij4KICAgIDxyZWN0IHg9IjM2IiB5PSIxMiIgd2lkdGg9IjEwIiBoZWlnaHQ9IjciIHJ4PSIxLjUiIHJ5PSIxLjUiIGZpbGw9IndoaXRlIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjIiLz4KICA8L2c+CgogIDwhLS0gNC4gV2hlZWxzIC0tPgogIDxnIGlkPSJ3aGVlbHMiIGZpbGw9IndoaXRlIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjIiPgogICAgPGNpcmNsZSBjeD0iOSIgc3Ryb2tlLXdpZHRoPSIyIiBjeT0iMzYiIHI9IjUiLz4KICAgIDxjaXJjbGUgY3g9IjIxIiBjeT0iMzYiIHI9IjUiLz4KICAgIDxjaXJjbGUgY3g9IjM5IiBjeT0iMzYiIHI9IjUiLz4KICA8L2c+Cjwvc3ZnPg=='
   };
   
-  function loadColoredSvgFromUrl(svgUrl, color) {
-    // Decode the SVG from the original data URL
-    const isBase64 = svgUrl.includes(';base64,');
-    const raw = svgUrl.split(',')[1];
-    const svgText = isBase64 ? atob(raw) : decodeURIComponent(raw);
-  
-    // Replace fill="currentColor" with the given color
-    const colored = svgText.replace(/fill="currentColor"/gi, `fill="${color}"`);
-  
-    // Return a new utf8 data URL
-    return 'data:image/svg+xml;utf8,' + encodeURIComponent(colored);
-  }
-  
-function loadColoredSvg(svgPath, color, targetFill = 'pink') {
+export function loadColoredSvg(svgPath, color, targetFill = 'pink') {
     return fetch(svgPath)
       .then(res => res.text())
       .then(svgText => {
-        //const colored = svgText.replace(new RegExp(`fill="${targetFill}"`, 'g'), `fill="${color}"`);
         const colored = svgText.replace(/fill="currentColor"/gi, `fill="${color}"`);
         const blob = new Blob([colored], { type: 'image/svg+xml' });
         return URL.createObjectURL(blob);
@@ -36,16 +24,15 @@ function loadColoredSvg(svgPath, color, targetFill = 'pink') {
       });
   }
 
-  function renderVehiclePreview() {
+  export function renderVehiclePreview() {
     const previewEl = document.getElementById('vehicle-display');
-    if (!previewEl || !currentVehicle) return;
+    if (!previewEl || !gameState.currentVehicle) return;
   
-    previewEl.innerHTML = ''; // Clear previous preview
-  
+    previewEl.innerHTML = ''; 
     const previewVehicle = document.createElement('div');
     previewVehicle.className = 'vehicle-image';
 
-    loadColoredSvg(`/vehicles/${currentVehicle.type}.svg`, currentVehicle.color)
+    loadColoredSvg(`/vehicles/${gameState.currentVehicle.type}.svg`, gameState.currentVehicle.color)
     .then(coloredUrl => {
       previewVehicle.style.backgroundImage = `url(${coloredUrl})`;
     });
@@ -53,12 +40,12 @@ function loadColoredSvg(svgPath, color, targetFill = 'pink') {
     previewVehicle.style.backgroundSize = 'contain';
     previewVehicle.style.backgroundRepeat = 'no-repeat';
     previewVehicle.style.backgroundPosition = 'center';
-    previewVehicle.style.filter = `drop-shadow(0 0 0 ${currentVehicle.color || 'pink'}) saturate(200%) brightness(80%)`;
+    previewVehicle.style.filter = `drop-shadow(0 0 0 ${gameState.currentVehicle.color || 'pink'}) saturate(200%) brightness(80%)`;
   
-    if (currentVehicle.size === 'small') {
+    if (gameState.currentVehicle.size === 'small') {
       previewVehicle.style.width = '50%';
       previewVehicle.style.height = '50%';
-    } else if (currentVehicle.size === 'medium') {
+    } else if (gameState.currentVehicle.size === 'medium') {
       previewVehicle.style.width = '75%';
       previewVehicle.style.height = '75%';
     } else {
