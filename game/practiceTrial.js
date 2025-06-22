@@ -99,20 +99,25 @@ function showPracticeQuestions() {
         <div class="message-box">
             <h2>Practice Quiz</h2>
 
-            <p>1. How many moves do you have?</p>
+            <p>1. How many moves do you have in the Learning Phase?</p>
             <button data-question="1" data-choice="A">A) 4</button>
             <button data-question="1" data-choice="B">B) Unlimited</button>
             <button data-question="1" data-choice="C">C) 10</button>
 
-            <p>2. What happens when you hit a failure (🔥)?</p>
-            <button data-question="2" data-choice="A">A) You earn points</button>
-            <button data-question="2" data-choice="B">B) It increases your public speaking time</button>
-            <button data-question="2" data-choice="C">C) Nothing</button>
+            <p>2. How many moves do you have in the Planning phase?</p>
+            <button data-question="2" data-choice="A">A) 4</button>
+            <button data-question="2" data-choice="B">B) Unlimited</button>
+            <button data-question="2" data-choice="C">C) 10</button>
 
-            <p>3. Which trials determine your outcomes?</p>
-            <button data-question="3" data-choice="A">A) All trials</button>
-            <button data-question="3" data-choice="B">B) Every second trial</button>
-            <button data-question="3" data-choice="C">C) A few randomly selected ones</button>
+            <p>3. What happens when you hit a failure (🔥)?</p>
+            <button data-question="3" data-choice="A">A) You earn points</button>
+            <button data-question="3" data-choice="B">B) It increases your public speaking time</button>
+            <button data-question="3" data-choice="C">C) Nothing</button>
+
+            <p>4. Which trials determine your outcomes?</p>
+            <button data-question="4" data-choice="A">A) All trials</button>
+            <button data-question="4" data-choice="B">B) Every second trial</button>
+            <button data-question="4" data-choice="C">C) A few randomly selected ones</button>
 
             <div id="quiz-feedback" style="margin-top: 20px;"></div>
         </div>
@@ -136,7 +141,7 @@ function checkAnswer(qNum, choice) {
     const allButtons = document.querySelectorAll(`button[data-question='${qNum}']`);
     allButtons.forEach(btn => btn.disabled = true);
     const clickedBtn = document.querySelector(`button[data-question='${qNum}'][data-choice='${choice}']`);
-    const correctAnswers = {1: 'A', 2: 'B', 3: 'C'};
+    const correctAnswers = {1: 'B', 2: 'A', 3: 'B', 4:'C'};
 
     const isCorrect = correctAnswers[qNum] === choice;
     if (isCorrect) {
@@ -154,7 +159,7 @@ function checkAnswer(qNum, choice) {
 
     practiceAnswers[qNum] = choice;
     const feedback = document.getElementById('quiz-feedback');
-    if (Object.keys(practiceAnswers).length === 3) {
+    if (Object.keys(practiceAnswers).length === 4) {
         feedback.innerHTML = `
             <p style="color: #333;"><strong>Check your answers and make sure you understand before continuing.</strong></p>
             <div style="margin-top: 10px;">
