@@ -16,6 +16,4 @@ export const gameState = {
   PLAN_POOL: [],
   vehicleTrialQueueLearn: [],
   vehicleTrialQueuePlan: [],
-
-
 }

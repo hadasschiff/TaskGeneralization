@@ -158,9 +158,12 @@ function loadMazeFrom(pool, idx){
   gameState.terminator = m.terminator ? { ...m.terminator } : null;
   gameState.currentVehicle.x = m.start.x;
   gameState.currentVehicle.y = m.start.y;
+  gameState.gameData.startPosition = { x: gameState.currentVehicle.x, y: gameState.currentVehicle.y };
+
 
   console.log("Gridworld" , gameState.gridWorld);
   console.log(`Optimal route for ${m.id}: ${m.optimalDirections.join(', ')}`);
+  console.log("starting position:", gameState.gameData.startPosition);
   renderGrid();
 }
 
@@ -398,7 +401,6 @@ function setupKeyboardListeners() {
       currentTrialData.actions.push({
         keyPressed: key,
         direction,
-        timestamp: now,
         rt,
         timeSinceStart
       });
@@ -568,11 +570,6 @@ export function createTrial() {
     document.getElementById('failure-count').textContent = 0;
   }
   const maze = gameState.LEARN_POOL[gameState.learnOrder[gameState.currentTrial- 1]];
-  //console.log("LEARN_POOL", gameState.LEARN_POOL);
-  //console.log("learnOrder", gameState.learnOrder);
-  //console.log("currentTrial", gameState.currentTrial);
-
-
   const vehicleData = maze.vehicleType;
 
   if (!maze || !maze.vehicleType) {
@@ -968,8 +965,8 @@ function endTrial() {
     }
   
     const accuracy = matchCount / optimal.length;
-    console.log(`Optimal: ${optimal.join(', ')}`);
-    console.log(`Player:  ${actual.join(', ')}`);  
+    //console.log(`Optimal: ${optimal.join(', ')}`);
+    console.log(`Players actions:  ${actual.join(', ')}`);  
     currentTrialData.matchAccuracy = accuracy;
     //const totalTrialTime = Date.now() - currentTrialData.startTime;
     const totalTrialTime = currentTrialData.lastValidKeyTime - currentTrialData.startTime;
@@ -1239,18 +1236,18 @@ function submitPlan(sequence, rawInputKeys) {
     simulatedY = nextY;
 
     tile = mazeused.grid[simulatedY][simulatedX];
-    console.log(`At (${simulatedY}, ${simulatedX}): tile =`, tile);
+    //console.log(`At (${simulatedY}, ${simulatedX}): tile =`, tile);
     if (tile === 'reward') {
         hitsDuringPlan.push('reward');
-        console.log('hit reward');
+        //console.log('hit reward');
         mazeused.grid[simulatedY][simulatedX] = 'empty'; // mark as collected
 
     } else if (tile === 'obstacle') {
         hitsDuringPlan.push('obstacle');
-        console.log('hit obstacle');
+        //console.log('hit obstacle');
     } else if (tile === 'terminator') {
         hitsDuringPlan.push('terminator');
-        console.log('hit terminator ');
+        //console.log('hit terminator ');
         break; 
     } else {
         hitsDuringPlan.push('empty');
@@ -1289,8 +1286,8 @@ function submitPlan(sequence, rawInputKeys) {
   
   currentTrialData.endTime = Date.now();
   currentTrialData.totalTime = currentTrialData.endTime - currentTrialData.startTime;
-  console.log('total time');
-  console.log(currentTrialData.totalTime)
+  //console.log('total time');
+  //console.log(currentTrialData.totalTime)
   console.log(`Planning RT for this trial (ms): ${currentTrialData.totalTime}`);
   //console.log(`Planning RT for this trial (s): ${(currentTrialData.totalTime / 1000).toFixed(2)} seconds`);
 
