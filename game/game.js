@@ -192,6 +192,8 @@ function endGame() {
   
   // Save completion time
   const completionTime = Date.now();
+  console.log('completion time:')
+  console.log(completionTime);
   
   // Display completion screen
   container.innerHTML = `
@@ -364,25 +366,47 @@ function setupKeyboardListeners() {
   document.addEventListener('keydown', function(event) {
       // Only handle key presses during the active learning phase
       if (!gameState.inputEnabled || gameState.currentPhase !== 1 && gameState.currentPhase !== 0) return;
+      
       const key = event.key.toLowerCase();
       const currentTrialData = getCurrentTrialData();
       
       if (!currentTrialData.routeTaken) currentTrialData.routeTaken = [];
-      if (key === gameState.currentVehicle.keys.up) {
-          moveVehicle('up');
-          currentTrialData.routeTaken.push('up');
-      } else if (key === gameState.currentVehicle.keys.down) {
-          moveVehicle('down');
-          currentTrialData.routeTaken.push('down');
-      } else if (key === gameState.currentVehicle.keys.left) {
-          moveVehicle('left');
-          currentTrialData.routeTaken.push('left');
-      } else if (key === gameState.currentVehicle.keys.right) {
-          moveVehicle('right');
-          currentTrialData.routeTaken.push('right');
+      if (!currentTrialData.actions) currentTrialData.actions = [];
+      
+      const now = Date.now();
+      const timeSinceStart = now - currentTrialData.startTime;
+
+      let direction = null;
+      if (key === gameState.currentVehicle.keys.up) direction = 'up';
+      else if (key === gameState.currentVehicle.keys.down) direction = 'down';
+      else if (key === gameState.currentVehicle.keys.left) direction = 'left';
+      else if (key === gameState.currentVehicle.keys.right) direction = 'right';
+      
+      if (direction) {
+        let rt;
+
+       if (!currentTrialData.lastValidKeyTime) {
+        // first valid key
+        rt = timeSinceStart;
+       } else {
+       rt = now - currentTrialData.lastValidKeyTime;
+       }
+      currentTrialData.lastValidKeyTime = now;
+
+      moveVehicle(direction);
+      currentTrialData.routeTaken.push(direction);
+      currentTrialData.actions.push({
+        keyPressed: key,
+        direction,
+        timestamp: now,
+        rt,
+        timeSinceStart
+      });
+
       } else {
         showWrongKeyAlert();
       }
+
   });
 }
 
@@ -719,7 +743,7 @@ export function updateVehicleInfo() {
 }
   
 function initPlanningInput () {
-  console.log('went into init planning input function');
+  //console.log('went into init planning input function');
   const boxes = document.querySelectorAll('.move-box');
   const btn = document.getElementById('submit-plan');
   
@@ -790,6 +814,8 @@ function initPlanningInput () {
 
 function startTrialTimer() {
   const trialStartTime = Date.now();
+  //console.log('trial start time:')
+  //console.log(trialStartTime);
   
   // Store initial trial data
   const trialData = {
@@ -921,6 +947,8 @@ function endTrial() {
   const currentTrialData = getCurrentTrialData();
   if (!currentTrialData) return;
   currentTrialData.endTime = Date.now();
+  //console.log('trial end time:');
+  //console.log(currentTrialData.endTime)
   currentTrialData.totalTime = currentTrialData.endTime - currentTrialData.startTime;
   currentTrialData.endPosition = { x: gameState.currentVehicle.x, y: gameState.currentVehicle.y };
 
@@ -931,6 +959,8 @@ function endTrial() {
     const maze = gameState.LEARN_POOL[gameState.learnOrder[gameState.currentTrial- 1]];    
     const optimal = maze.optimalDirections;
     const actual = currentTrialData.routeTaken || [];
+    console.table(currentTrialData.actions);
+
   
     let matchCount = 0;
     for (let i = 0; i < optimal.length; i++) {
@@ -941,6 +971,10 @@ function endTrial() {
     console.log(`Optimal: ${optimal.join(', ')}`);
     console.log(`Player:  ${actual.join(', ')}`);  
     currentTrialData.matchAccuracy = accuracy;
+    //const totalTrialTime = Date.now() - currentTrialData.startTime;
+    const totalTrialTime = currentTrialData.lastValidKeyTime - currentTrialData.startTime;
+    console.log("Total Trial Time:", totalTrialTime, "ms");
+
   }
   
   showTrialResults();
@@ -948,7 +982,7 @@ function endTrial() {
 
 function showTrialResults() {
   gameState.inputEnabled = false;
-  console.log('trial ended');
+  //console.log('trial ended');
 
   const container = document.querySelector('.game-container');
   let fadeOverlay = document.querySelector('.fade-overlay');
@@ -1255,6 +1289,12 @@ function submitPlan(sequence, rawInputKeys) {
   
   currentTrialData.endTime = Date.now();
   currentTrialData.totalTime = currentTrialData.endTime - currentTrialData.startTime;
+  console.log('total time');
+  console.log(currentTrialData.totalTime)
+  console.log(`Planning RT for this trial (ms): ${currentTrialData.totalTime}`);
+  //console.log(`Planning RT for this trial (s): ${(currentTrialData.totalTime / 1000).toFixed(2)} seconds`);
+
+
   currentTrialData.inputSequence = moveSequence;
   
   // Clear the input field
