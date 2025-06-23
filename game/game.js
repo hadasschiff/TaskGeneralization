@@ -320,7 +320,8 @@ export function createGameUI() {
   // Clear existing content
   container.innerHTML = '';
   container.style.opacity = '1';
-    container.innerHTML = `
+  container.innerHTML = `
+  
     <div class="header-bar">
         <div class="score-group">
             <div class="score">Score: <span id="score">0</span></div>
@@ -329,17 +330,25 @@ export function createGameUI() {
         </div>
     </div>
     <div class="game-layout">
-        <!-- 1.  Key panel  -->
-        <div id="controls-info" class="controls-info">
-            <div id="movement-instructions"></div>
-            <div id="planning-controls" style="display:none">
-                <p><strong>Plan your 4 moves!</strong></p>
-                <div class="planning-input">
-                    <input id="move-sequence" placeholder="e.g. wasd" autocomplete="off" />
-                    <button id="submit-plan">Submit</button>
-              </div>
-          </div>
+    <div id="controls-info">
+      <div id="movement-instructions"></div>
+       <div id="planning-controls" style="display: none;">
+        <p><strong>Plan your 4 moves!</strong></p>
+
+        <div class="planning-input" id="slots">
+          <input class="move-box" maxlength="1" data-idx="0">
+          <input class="move-box" maxlength="1" data-idx="1">
+          <input class="move-box" maxlength="1" data-idx="2">
+          <input class="move-box" maxlength="1" data-idx="3">
+
+        </div>
+
+        <button id="submit-plan">Submit</button>
+        <input id="move-sequence"  maxlength="4" autocomplete="off" style="opacity:0;position:absolute;" />
+        
       </div>
+    </div>
+
       <div class="grid-wrapper">
           <div class="game-grid-inner-container">
               <div id="game-grid"></div>
@@ -347,6 +356,7 @@ export function createGameUI() {
       </div>
       <div id="vehicle-display" class="vehicle-display"></div>
   </div>
+  </div> 
 `;
 }
 
@@ -518,6 +528,8 @@ function showTrialInstructions(page = 1) {
     document.getElementById('start-trial-btn').addEventListener('click', () => {
       overlay.remove();
       teleprompter.startTeleprompterSimulation()
+      //createGameUI();
+      //practice.startPracticeTrial();
     });
   }
 }
@@ -654,13 +666,16 @@ function showWrongKeyAlert() {
 export function updateVehicleInfo() {
   const movementInstructionsEl = document.getElementById('movement-instructions');
   const planningControlsEl = document.getElementById('planning-controls');
-  
+
   if (!movementInstructionsEl || !planningControlsEl) {
-      console.error("Required elements not found!");
-      return;
+    console.error("Required elements not found!");
+    return;
   }
-  
+
   if (gameState.currentPhase === 1 || gameState.currentPhase === 0) {
+   // const movementInstructionsEl = document.getElementById('movement-instructions');
+
+  
     movementInstructionsEl.innerHTML = `
   <h3 class="keys-title">Keys</h3>
   <div class="key-diamond">
@@ -686,58 +701,93 @@ export function updateVehicleInfo() {
   </div>
 `;
 
-    movementInstructionsEl.style.display = 'block';
+    movementInstructionsEl.style.display = 'flex';
+    
+    //movementInstructionsEl.style.display = 'block';
     planningControlsEl.style.display = 'none';
   
   } else if (gameState.currentPhase === 2) {
     // Phase 2 (planning) - hide movement, show planning input
     movementInstructionsEl.style.display = 'none';
     planningControlsEl.style.display = 'block';
-  
-    const submitButton = document.getElementById('submit-plan');
-    const moveSequenceInput = document.getElementById('move-sequence');
 
-    if (submitButton && !submitButton.listenerAdded) {
-      submitButton.addEventListener('click', submitPlan);
-      submitButton.listenerAdded = true; // Prevent multiple listeners
-    }
-
-    if (moveSequenceInput && !moveSequenceInput.listenerAdded) {
-    moveSequenceInput.listenerAdded = true;
-
-    moveSequenceInput.addEventListener('keydown', function(event) {
-    const currentTrialData = getCurrentTrialData();
-
-    // Initialize input log if not present
-    if (!currentTrialData.rawInputKeys) {
-      currentTrialData.rawInputKeys = [];
-    }
-
-    // Record the raw key
-    currentTrialData.rawInputKeys.push(event.key);
-
-    // Prevent typing more than 4 characters unless it's a control key
-    const isControlKey = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab'].includes(event.key);
-
-    // Block input if already 4 characters, unless it's a control key or Enter
-    if (
-      !isControlKey &&
-      event.key.length === 1 &&  // only block actual characters
-      moveSequenceInput.value.length >= 4 &&
-      event.key !== 'Enter'
-    ) {
-      event.preventDefault();} 
-
-    if (event.key === 'Enter') {
-        event.preventDefault();
-        submitPlan();
-    }
-  });
-  moveSequenceInput.listenerAdded = true;
-}
+  if (!planningControlsEl.initialised) {
+    initPlanningInput();
+    planningControlsEl.initialised = true;
+  }
   }
 }
   
+function initPlanningInput () {
+  console.log('went into init planning input function');
+  const boxes = document.querySelectorAll('.move-box');
+  const btn = document.getElementById('submit-plan');
+  
+
+  boxes.forEach((box, idx) => {
+    box.addEventListener('keydown', (e) => {
+    const trialIndex = gameState.currentTrial - 1;
+      if (!gameState.gameData.phase2[trialIndex]) {
+      gameState.gameData.phase2[trialIndex] = {};
+    }
+    const currentTrialData = gameState.gameData.phase2[trialIndex];
+  
+    if (!currentTrialData.rawInputKeys) {
+      currentTrialData.rawInputKeys = [];
+    }
+      currentTrialData.rawInputKeys.push(e.key);
+      //console.log("Raw input so far:", currentTrialData.rawInputKeys.join(''));
+
+      const isLetter = /^[a-zA-Z]$/.test(e.key);
+      const isBackspace = e.key === 'Backspace';
+      const isEnter = e.key === 'Enter';
+
+      if (isLetter) {
+        // Allow letter, but defer to 'input' handler
+        return;
+      }
+
+      if (isBackspace) {
+        if (!box.value && idx > 0) {
+          boxes[idx - 1].focus();
+        }
+        return;
+      }
+
+      if (isEnter) {
+        e.preventDefault();
+        if (!btn.disabled) btn.click();
+        return;
+      }
+
+      // Block anything else
+      e.preventDefault();
+    });
+
+    box.addEventListener('input', () => {
+      // Always keep only a single uppercase letter
+      box.value = box.value.slice(0, 1).toUpperCase();
+
+      if (box.value && idx < 3) {
+        boxes[idx + 1].focus();
+      }
+
+      // Enable submit button only if all boxes are filled
+      const allFilled = [...boxes].every(b => b.value.length === 1);
+      btn.disabled = !allFilled;
+    });
+  });
+
+
+
+  btn.addEventListener('click', () => {
+    const sequence = [...boxes].map(b => b.value.toLowerCase()).join('');
+    const trialIndex = gameState.currentTrial - 1;
+    const currentTrialData = gameState.gameData.phase2[trialIndex];
+    submitPlan(sequence, currentTrialData.rawInputKeys );
+  });
+}
+
 function startTrialTimer() {
   const trialStartTime = Date.now();
   
@@ -1026,6 +1076,8 @@ function showPlanningInstructions() {
   startButton.addEventListener('click', function() {
       overlay.remove();
       createPlanningTrial();
+      document.querySelector('.move-box').focus();
+
   });
 }
 
@@ -1082,14 +1134,16 @@ function getCurrentTrialData() {
   }
 }
 
-function submitPlan() {
+function submitPlan(sequence, rawInputKeys) {
   console.log("Submitting plan");
-  const moveSequenceInput = document.getElementById('move-sequence');
-  if (!moveSequenceInput) {
-      console.error("Move sequence input element not found!");
-      return;
-  }
-  const moveSequence = moveSequenceInput.value.toLowerCase();
+  // const moveSequenceInput = document.getElementById('move-sequence');
+  // if (!moveSequenceInput) {
+  //     console.error("Move sequence input element not found!");
+  //     return;
+  // }
+  // const moveSequence = moveSequenceInput.value.toLowerCase();
+  const moveSequence = sequence;
+
   console.log(`Move sequence submitted: ${moveSequence}`);
   
   // Record moves
@@ -1204,7 +1258,12 @@ function submitPlan() {
   currentTrialData.inputSequence = moveSequence;
   
   // Clear the input field
-  moveSequenceInput.value = '';
+  //moveSequenceInput.value = '';
+
+  document.querySelectorAll('.move-box').forEach(box => box.value = '');
+  document.getElementById('submit-plan').disabled = true;
+  document.querySelector('.move-box').focus();
+
   currentTrialData.inputSequence = moveSequence;
   currentTrialData.vehicleInfo = {
     type: gameState.currentVehicle.type,
@@ -1214,11 +1273,16 @@ function submitPlan() {
 
   console.log('Submitted Plan Summary:', {
     inputSequence: currentTrialData.inputSequence,
-    rawInputKeys: currentTrialData.rawInputKeys,
+    rawInputKeys: rawInputKeys,
     vehicle: currentTrialData.vehicleInfo
   });
+  console.log('Raw Input Keys:', rawInputKeys);
+
 
   // Clear the input field
-  moveSequenceInput.value = '';
+  document.querySelectorAll('.move-box').forEach(box => box.value = '');
+  document.getElementById('submit-plan').disabled = true;
+  document.querySelector('.move-box').focus();
+
   endTrial();
 }
