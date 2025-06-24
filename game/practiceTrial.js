@@ -67,8 +67,12 @@ function showPracticeInstructions() {
         <div class="message-box" style="text-align: left;">
             <h2>This is a Practice Trial</h2>
             <p style="font-size: 1.2rem; margin: 12px 0; line-height: 1.6; text-align: left;">
+            This is practicing the learning phase. Here you have unlimited moves. <br>
+            In the planning phase, you only have 4 moves. <br>
             Use the correct keys to move the car around the maze.</p>
-            <p>Try collecting the 💰 reward and avoiding the 🔥 obstacle.</p>
+            <p style="font-size: 1.2rem; margin: 12px 0; line-height: 1.6; text-align: left;">
+
+            Try collecting the 💰 reward and avoiding the 🔥 obstacle.</p>
             <div style="text-align: center; margin-top: 20px;">
                 <button id="start-practice-btn" style="padding: 10px 20px;">Start</button>
             </div>
