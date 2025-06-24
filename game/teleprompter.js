@@ -26,8 +26,17 @@ export function startTeleprompterSimulation() {
 
     container.appendChild(overlay);
     document.getElementById('start-teleprompter').addEventListener('click', () => {
-        overlay.remove();
-        showTeleprompterScroll();
+        navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+            // Microphone access granted
+            stream.getTracks().forEach(track => track.stop()); // Close the stream
+            overlay.remove(); // Now remove overlay and proceed
+            showTeleprompterScroll();
+        })
+        .catch(err => {
+            // Mic access denied or unavailable
+            alert("Microphone access is required to proceed. Please enable your microphone and refresh the page.");
+        });
     });
 }
 
