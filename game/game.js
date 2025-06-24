@@ -4,8 +4,9 @@ import * as teleprompter from './teleprompter.js'
 import { gameState } from './gameState.js';
 import * as vehicles from './vehicle.js';
 import * as practice from './practiceTrial.js'
-// import { db } from './firebaseconfig.js';
-// import { doc, setDoc } from "firebase/firestore";
+import { db } from './firebaseconfig.js';
+//import { doc, setDoc } from './firebaseconfig.js';
+import {collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
 function rInt(rng, n) { return Math.floor(rng() * n); }
 
@@ -183,8 +184,8 @@ function endGame() {
   
   // Save completion time
   const completionTime = Date.now();
-  console.log('completion time:')
-  console.log(completionTime);
+  gameState.gameData.totalGameTime = completionTime - gameState.gameStartTime;
+  //gameState.totalgametime = completionTime;
   
   // Display completion screen
   container.innerHTML = `
@@ -220,44 +221,70 @@ function endGame() {
   saveGameData();
 }
 
+function flattenGridWorldToWords(grid) {
+  if (!Array.isArray(grid) || !Array.isArray(grid[0])) return grid;
+
+  return grid[0].flat();
+}
+
+function sanitizeGameDataForFirestore(data) {
+  const deepCopy = structuredClone(data); // Safe deep copy
+
+  function convertActionsArray(arr) {
+    return arr.map(entry => {
+      if (Array.isArray(entry) && entry.length === 4) {
+        return {
+          key: entry[0],
+          direction: entry[1],
+          rt: entry[2],
+          time: entry[3]
+        };
+      } else {
+        return entry;
+      }
+    });
+  }
+
+  for (const phaseKey of ["practice", "phase1", "phase2"]) {
+    if (Array.isArray(deepCopy[phaseKey])) {
+      deepCopy[phaseKey].forEach(trial => {
+        if (trial.gridWorld) {
+          trial.gridWorld = flattenGridWorldToWords(trial.gridWorld);
+        }
+        if (Array.isArray(trial.actions)) {
+          trial.actions = convertActionsArray(trial.actions);
+        }
+        if (Array.isArray(trial.RT_L)) {
+          trial.RT_L = convertActionsArray(trial.RT_L);
+        }
+        if (Array.isArray(trial.RT_P)) {
+          trial.RT_P = convertActionsArray(trial.RT_P);
+        }
+      });
+    }
+  }
+
+  return deepCopy;
+}
+
 function saveGameData() {
-  console.log('Saving game data:', gameState.gameData);
-  
-  // Option 1: Save to localStorage (for testing)
-  try {
-      localStorage.setItem('navigationGameData', JSON.stringify(gameState.gameData));
-      console.log('Game data saved to localStorage');
-  } catch (e) {
-      console.error('Failed to save to localStorage:', e);
-  }
-  
-  // Option 2: Save to server (Firebase example)
-  /*
-  if (typeof firebase !== 'undefined') {
-      // Create a unique session ID
-      const sessionId = 'session_' + Date.now();
-      
-      // Prepare data for saving
-      const data = {
-          timestamp: Date.now(),
-          prolificId: gameData.prolificId || 'anonymous',
-          studyId: gameData.studyId || 'local_test',
-          sessionId: gameData.sessionId || sessionId,
-          score: score,
-          phase1: gameData.phase1,
-          phase2: gameData.phase2
-      };
-      
-      // Save to Firebase
-      firebase.database().ref('game_data/' + sessionId).set(data)
-          .then(() => {
-              console.log('Data saved successfully to Firebase');
-          })
-          .catch((error) => {
-              console.error('Error saving data to Firebase:', error);
-          });
-  }
-  */
+  console.log('Saving game data:', (gameState.gameData));
+  const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const sanitizedData = sanitizeGameDataForFirestore(gameState.gameData);
+
+  console.log('Saving game data:', sanitizedData);
+
+  const gameDataRef = doc(collection(db, 'gameSessions'), sessionId);
+
+  setDoc(gameDataRef, {
+    sessionId: sessionId,
+    timestamp: new Date().toISOString(),
+    data: sanitizedData
+  })
+  .then(() => console.log (`saved game session: ${sessionId}`))
+  .catch((error) => {
+    console.error('Error saving game data:', error);
+  });
 }
 
 // function extractProlificParams() {
@@ -382,20 +409,18 @@ function setupKeyboardListeners() {
         rt = timeSinceStart;
        } else {
        rt = now - currentTrialData.lastValidKeyTime;
-       }
+      }
       currentTrialData.lastValidKeyTime = now;
 
-      moveVehicle(direction);
       currentTrialData.routeTaken.push(direction);
-      const action = (key+" " + direction + " " + rt + " "+ timeSinceStart);
-      currentTrialData.actions.push(action)
-      //   [key,
-      //   direction,
-      //   rt,
-      //   timeSinceStart
-      // ]);
-      console.log("just actions",currentTrialData.actions);
-      console.log("all data",currentTrialData);
+      currentTrialData.actions.push(
+        [key,
+        direction,
+        rt,
+        timeSinceStart
+      ]);
+      moveVehicle(direction);
+
       } else {
         showWrongKeyAlert();
       }
@@ -407,6 +432,8 @@ export function startLearningPhase() {
   gameState.currentPhase = 1;
   gameState.currentTrial= 1;
   gameState.score = 0;
+  
+  if (!gameState.gameStartTime) gameState.gameStartTime = Date.now();
 
   // update score
   document.getElementById('score').textContent = gameState.score;
@@ -544,9 +571,9 @@ function showTrialInstructions(page = 1) {
     container.appendChild(overlay);
     document.getElementById('start-trial-btn').addEventListener('click', () => {
       overlay.remove();
-      //teleprompter.startTeleprompterSimulation()
-      createGameUI();
-      practice.startPracticeTrial();
+      teleprompter.startTeleprompterSimulation()
+      //createGameUI();
+      //practice.startPracticeTrial();
     });
   }
 }
@@ -826,10 +853,11 @@ function startTrialTimer() {
       totalTime: null,
       mazeId: gameState.mazeId,
       optimalRoute: gameState.optimalDirections, 
-      RT_L : gameState.RT_L,
-      RT_P: gameState.RT_P,
+      //RT_L : gameState.RT_L,
+      //RT_P: gameState.RT_P,
       actions: [],
-
+      //totalgametime: gameState.totalgametime, 
+      //trialtime: gameState.trialtime,
   
   };
   if (gameState.currentPhase === 1) {
@@ -952,21 +980,16 @@ function endTrial() {
 
   console.log(`Hits during trial ${gameState.currentTrial}:`);
   console.log(currentTrialData.hits);
-  gameState.hits
   
   if (gameState.currentPhase === 1) {
     const maze = gameState.LEARN_POOL[gameState.learnOrder[gameState.currentTrial- 1]];    
     const optimal = maze.optimalDirections;
     const actual = currentTrialData.routeTaken || [];
     console.table(currentTrialData.actions);
-    console.log(currentTrialData);
-    console.log(currentTrialData.actions);
+    //gameState.RT_L = structuredClone(currentTrialData.actions);
+    currentTrialData.RT_L = structuredClone(currentTrialData.actions);
 
-    gameState.RT_L = structuredClone(currentTrialData.actions);
-    console.log(currentTrialData);
-    currentTrialData.actions=[];
 
-  
     let matchCount = 0;
     for (let i = 0; i < optimal.length; i++) {
       if (actual[i] === optimal[i]) matchCount++;
@@ -979,8 +1002,15 @@ function endTrial() {
     //const totalTrialTime = Date.now() - currentTrialData.startTime;
     const totalTrialTime = currentTrialData.lastValidKeyTime - currentTrialData.startTime;
     console.log("Total Trial Time:", totalTrialTime, "ms");
+    //gameState.trialtime = totalTrialTime;
+    currentTrialData.trialtime = totalTrialTime;
+    delete currentTrialData.actions;
+    delete currentTrialData.lastValidKeyTime;
+    delete currentTrialData.endTime;
+    delete currentTrialData.moves;
+    delete currentTrialData.endTime;
+    delete currentTrialData.startTime;
   }
-  
   showTrialResults();
 }
 
@@ -1174,12 +1204,6 @@ function getCurrentTrialData() {
 
 function submitPlan(sequence, rawInputKeys) {
   console.log("Submitting plan");
-  // const moveSequenceInput = document.getElementById('move-sequence');
-  // if (!moveSequenceInput) {
-  //     console.error("Move sequence input element not found!");
-  //     return;
-  // }
-  // const moveSequence = moveSequenceInput.value.toLowerCase();
   const moveSequence = sequence;
 
   console.log(`Move sequence submitted: ${moveSequence}`);
@@ -1214,7 +1238,7 @@ function submitPlan(sequence, rawInputKeys) {
   const mazeused = gameState.PLAN_POOL[gameState.planOrder[gameState.currentTrial- 1]];
   console.log(mazeused);
   //currentTrialData.mazeId = m.id;
-  currentTrialData.planOrderIndex = gameState.planOrder[gameState.currentTrial- 1]; // index used
+  //currentTrialData.planOrderIndex = gameState.planOrder[gameState.currentTrial- 1]; // index used
   //currentTrialData.optimalDirections = mazeused.optimalDirections;
 
   let simulatedX = mazeused.start.x;
@@ -1297,7 +1321,12 @@ function submitPlan(sequence, rawInputKeys) {
   //console.log('total time');
   //console.log(currentTrialData.totalTime)
   console.log(`Planning RT for this trial (ms): ${currentTrialData.totalTime}`);
-  gameState.RT_P = currentTrialData.totalTime;
+  //gameState.RT_P = currentTrialData.totalTime;
+  //gameState.trialtime = currentTrialData.totalTime;
+  currentTrialData.RT_P = currentTrialData.totalTime;
+  currentTrialData.trialtime = currentTrialData.totalTime;
+
+
   //console.log(`Planning RT for this trial (s): ${(currentTrialData.totalTime / 1000).toFixed(2)} seconds`);
 
 

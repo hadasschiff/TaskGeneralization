@@ -23,6 +23,14 @@ export const gameState = {
   initialGrid: [],
   RT_L: [],
   RT_P: [],
+  totalgametime: 0, 
+  starttime: null, 
+  endtime: null,
+  trialtime: null,
+  gameStartTime: null,
+  
+
+
 
 
 
