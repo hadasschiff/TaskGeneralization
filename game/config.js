@@ -3,7 +3,7 @@
 export const GRID_SIZE = 3;
 // number of repettions for each vehicle type
 export const LEARNING_TRIALS = 1; // change after to 20
-export const PLANNING_TRIALS = 2; // change after to 10
+export const PLANNING_TRIALS = 1; // change after to 10
 
 // Vehicle types and controls
 export const VEHICLE_TYPES = {

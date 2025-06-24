@@ -1,24 +1,11 @@
+//game.js
 import * as config from './config.js';
 import * as teleprompter from './teleprompter.js'
 import { gameState } from './gameState.js';
 import * as vehicles from './vehicle.js';
 import * as practice from './practiceTrial.js'
-
-
-//game.js
-// let vehicleTrialQueueLearn = [];
-// let vehicleTrialQueuePlan = [];
-// let LEARN_POOL = [];
-// let PLAN_POOL = [];
-// let gameState.currentPhase = 0;
-// let gameState.currentTrial= 0;
-// let gameState.currentVehicle = {type: null, size: null, color: null, x: 0, y: 0, keys: {}};
-// let score = 0;
-// let gridWorld = [];
-// let obstacles = [];
-// let rewards = [];
-// let inputEnabled = false;
-// let gameData = {phase1: [], phase2: []};
+// import { db } from './firebaseconfig.js';
+// import { doc, setDoc } from "firebase/firestore";
 
 function rInt(rng, n) { return Math.floor(rng() * n); }
 
@@ -151,19 +138,20 @@ function loadMazeFrom(pool, idx){
   }
   console.log(`Loaded maze ${m.id}. phase ${gameState.currentPhase}, (trial ${gameState.currentTrial})`);
 
-
   gameState.gridWorld = m.grid.map(r=>[...r]);
   gameState.rewards   = m.rewards.map(r=>({...r}));
   gameState.obstacles = m.obstacles ? m.obstacles.map(o => ({ ...o })) : [];
   gameState.terminator = m.terminator ? { ...m.terminator } : null;
   gameState.currentVehicle.x = m.start.x;
   gameState.currentVehicle.y = m.start.y;
-  gameState.gameData.startPosition = { x: gameState.currentVehicle.x, y: gameState.currentVehicle.y };
-
+  gameState.startPosition = { x: gameState.currentVehicle.x, y: gameState.currentVehicle.y };
+  gameState.mazeId = m.id
 
   console.log("Gridworld" , gameState.gridWorld);
+  gameState.initialGrid = structuredClone(gameState.gridWorld)
   console.log(`Optimal route for ${m.id}: ${m.optimalDirections.join(', ')}`);
-  console.log("starting position:", gameState.gameData.startPosition);
+  gameState.optimalDirections = m.optimalDirections;
+  console.log("starting position:", gameState.startPosition);
   renderGrid();
 }
 
@@ -272,20 +260,20 @@ function saveGameData() {
   */
 }
 
-function extractProlificParams() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const prolificPid = urlParams.get('PROLIFIC_PID');
-  const studyId = urlParams.get('STUDY_ID');
-  const sessionId = urlParams.get('SESSION_ID');
+// function extractProlificParams() {
+//   const urlParams = new URLSearchParams(window.location.search);
+//   const prolificPid = urlParams.get('PROLIFIC_PID');
+//   const studyId = urlParams.get('STUDY_ID');
+//   const sessionId = urlParams.get('SESSION_ID');
   
-  if (prolificPid) {
-      console.log('Prolific participant detected:', prolificPid);
-      // Store these IDs with the game data
-      gameData.prolificId = prolificPid;
-      gameData.studyId = studyId;
-      gameData.sessionId = sessionId;
-  }
-}
+//   if (prolificPid) {
+//       console.log('Prolific participant detected:', prolificPid);
+//       // Store these IDs with the game data
+//       gameData.prolificId = prolificPid;
+//       gameData.studyId = studyId;
+//       gameData.sessionId = sessionId;
+//   }
+// }
 
 export function initializeGame() {
   // Reset container styles for game
@@ -376,6 +364,7 @@ function setupKeyboardListeners() {
       if (!currentTrialData.routeTaken) currentTrialData.routeTaken = [];
       if (!currentTrialData.actions) currentTrialData.actions = [];
       
+
       const now = Date.now();
       const timeSinceStart = now - currentTrialData.startTime;
 
@@ -398,13 +387,15 @@ function setupKeyboardListeners() {
 
       moveVehicle(direction);
       currentTrialData.routeTaken.push(direction);
-      currentTrialData.actions.push({
-        keyPressed: key,
-        direction,
-        rt,
-        timeSinceStart
-      });
-
+      const action = (key+" " + direction + " " + rt + " "+ timeSinceStart);
+      currentTrialData.actions.push(action)
+      //   [key,
+      //   direction,
+      //   rt,
+      //   timeSinceStart
+      // ]);
+      console.log("just actions",currentTrialData.actions);
+      console.log("all data",currentTrialData);
       } else {
         showWrongKeyAlert();
       }
@@ -553,9 +544,9 @@ function showTrialInstructions(page = 1) {
     container.appendChild(overlay);
     document.getElementById('start-trial-btn').addEventListener('click', () => {
       overlay.remove();
-      teleprompter.startTeleprompterSimulation()
-      //createGameUI();
-      //practice.startPracticeTrial();
+      //teleprompter.startTeleprompterSimulation()
+      createGameUI();
+      practice.startPracticeTrial();
     });
   }
 }
@@ -596,6 +587,7 @@ export function createTrial() {
 
   // Reset maze
   loadMazeFrom(gameState.LEARN_POOL, gameState.learnOrder[gameState.currentTrial- 1]);
+
   // Update vehicle info display
   updateVehicleInfo();
   vehicles.renderVehiclePreview();
@@ -751,7 +743,7 @@ function initPlanningInput () {
       if (!gameState.gameData.phase2[trialIndex]) {
       gameState.gameData.phase2[trialIndex] = {};
     }
-    const currentTrialData = gameState.gameData.phase2[trialIndex];
+    const currentTrialData = gameState.gameData.phase2[trialIndex]; // BY REF!
   
     if (!currentTrialData.rawInputKeys) {
       currentTrialData.rawInputKeys = [];
@@ -824,12 +816,21 @@ function startTrialTimer() {
       startPosition: { x: gameState.currentVehicle.x, y: gameState.currentVehicle.y },
       obstacles: [...gameState.obstacles],
       rewards: [...gameState.rewards],
+      terminator: gameState.terminator,
+      gridWorld: [gameState.initialGrid],
       startTime: trialStartTime,
       moves: [],
       rewardsCollected: 0,
       obstaclesHit: 0,
       endTime: null,
-      totalTime: null
+      totalTime: null,
+      mazeId: gameState.mazeId,
+      optimalRoute: gameState.optimalDirections, 
+      RT_L : gameState.RT_L,
+      RT_P: gameState.RT_P,
+      actions: [],
+
+  
   };
   if (gameState.currentPhase === 1) {
       gameState.gameData.phase1.push(trialData);
@@ -947,16 +948,23 @@ function endTrial() {
   //console.log('trial end time:');
   //console.log(currentTrialData.endTime)
   currentTrialData.totalTime = currentTrialData.endTime - currentTrialData.startTime;
-  currentTrialData.endPosition = { x: gameState.currentVehicle.x, y: gameState.currentVehicle.y };
+  //currentTrialData.endPosition = { x: gameState.currentVehicle.x, y: gameState.currentVehicle.y };
 
   console.log(`Hits during trial ${gameState.currentTrial}:`);
   console.log(currentTrialData.hits);
+  gameState.hits
   
   if (gameState.currentPhase === 1) {
     const maze = gameState.LEARN_POOL[gameState.learnOrder[gameState.currentTrial- 1]];    
     const optimal = maze.optimalDirections;
     const actual = currentTrialData.routeTaken || [];
     console.table(currentTrialData.actions);
+    console.log(currentTrialData);
+    console.log(currentTrialData.actions);
+
+    gameState.RT_L = structuredClone(currentTrialData.actions);
+    console.log(currentTrialData);
+    currentTrialData.actions=[];
 
   
     let matchCount = 0;
@@ -967,11 +975,10 @@ function endTrial() {
     const accuracy = matchCount / optimal.length;
     //console.log(`Optimal: ${optimal.join(', ')}`);
     console.log(`Players actions:  ${actual.join(', ')}`);  
-    currentTrialData.matchAccuracy = accuracy;
+    //currentTrialData.matchAccuracy = accuracy;
     //const totalTrialTime = Date.now() - currentTrialData.startTime;
     const totalTrialTime = currentTrialData.lastValidKeyTime - currentTrialData.startTime;
     console.log("Total Trial Time:", totalTrialTime, "ms");
-
   }
   
   showTrialResults();
@@ -1206,9 +1213,9 @@ function submitPlan(sequence, rawInputKeys) {
   // Also get the optimal directions from the maze used in this trial
   const mazeused = gameState.PLAN_POOL[gameState.planOrder[gameState.currentTrial- 1]];
   console.log(mazeused);
-  currentTrialData.mazeId = mazeused.id;
+  //currentTrialData.mazeId = m.id;
   currentTrialData.planOrderIndex = gameState.planOrder[gameState.currentTrial- 1]; // index used
-  currentTrialData.optimalDirections = mazeused.optimalDirections;
+  //currentTrialData.optimalDirections = mazeused.optimalDirections;
 
   let simulatedX = mazeused.start.x;
   let simulatedY = mazeused.start.y;
@@ -1256,6 +1263,7 @@ function submitPlan(sequence, rawInputKeys) {
     }
 
   currentTrialData.hits = hitsDuringPlan;
+
   console.log("Optimal:", mazeused.optimalDirections);
   console.log("Player: ", playerDirections);
   console.log("Simulated hits:", hitsDuringPlan);
@@ -1289,6 +1297,7 @@ function submitPlan(sequence, rawInputKeys) {
   //console.log('total time');
   //console.log(currentTrialData.totalTime)
   console.log(`Planning RT for this trial (ms): ${currentTrialData.totalTime}`);
+  gameState.RT_P = currentTrialData.totalTime;
   //console.log(`Planning RT for this trial (s): ${(currentTrialData.totalTime / 1000).toFixed(2)} seconds`);
 
 

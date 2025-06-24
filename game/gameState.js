@@ -7,6 +7,8 @@ export const gameState = {
   gridWorld: [],
   obstacles: [],
   rewards: [],
+  terminator: [],
+  startPosition: [],
   inputEnabled: false,
   gameData: {practice: [], phase1: [], phase2: []},
   gameOrder: [],
@@ -16,4 +18,12 @@ export const gameState = {
   PLAN_POOL: [],
   vehicleTrialQueueLearn: [],
   vehicleTrialQueuePlan: [],
+  mazeId: null,
+  optimalRoute: [],
+  initialGrid: [],
+  RT_L: [],
+  RT_P: [],
+
+
+
 }
