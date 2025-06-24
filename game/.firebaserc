@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "vehicle-game-dev"
-  }
+    "default": "taskgeneralization"
+  },
+  "targets": {},
+  "etags": {}
 }

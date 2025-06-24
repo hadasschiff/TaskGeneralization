@@ -5,23 +5,14 @@ export const GRID_SIZE = 3;
 export const LEARNING_TRIALS = 1; // change after to 20
 export const PLANNING_TRIALS = 2; // change after to 10
 
-
-// number of trials
-//const LEARN_POOL_SIZE = 4; // change after to 80
-//const PLAN_POOL_SIZE  = 16; // change after to 80
-
-/* independent seeds so you can regenerate one pool without touching the other */
-//const POOL_RNG_LEARN = new Math.seedrandom('maze-learn-v1');
-//const POOL_RNG_PLAN  = new Math.seedrandom('maze-plan-v1');
-
 // Vehicle types and controls
 export const VEHICLE_TYPES = {
-  CAR_SMALL: { type: 'car', size: 'small', upKey: 'w', downKey: 's', leftKey: 'a', rightKey: 'd' },
-  CAR_BIG: { type: 'car', size: 'big', upKey: 'w', downKey: 's', leftKey: 'q', rightKey: 'e' },
-  CAR_MEDIUM: { type: 'car', size: 'medium', upKey: 'w', downKey: 's', leftKey: '-', rightKey: '-' },
-  TRUCK_SMALL: { type: 'truck', size: 'small', upKey: 'u', downKey: 'j', leftKey: 'h', rightKey: 'k' },
-  TRUCK_BIG: { type: 'truck', size: 'big', upKey: 'u', downKey: 'j', leftKey: 'y', rightKey: 'i' },
-  TRUCK_MEDIUM: { type: 'truck', size: 'medium', upKey: 'u', downKey: 'j', leftKey: '-', rightKey: '-' },
+  CAR_SMALL: { type: 'car', size: 'small', upKey: 'e', downKey: 'c', leftKey: 'a', rightKey: 'd' },
+  CAR_BIG: { type: 'car', size: 'big', upKey: 'e', downKey: 'c', leftKey: 's', rightKey: 'f' },
+  CAR_MEDIUM: { type: 'car', size: 'medium', upKey: 'e', downKey: 'c', leftKey: '-', rightKey: '-' },
+  TRUCK_SMALL: { type: 'truck', size: 'small', upKey: 'u', downKey: 'm', leftKey: 'g', rightKey: 'j' },
+  TRUCK_BIG: { type: 'truck', size: 'big', upKey: 'u', downKey: 'm', leftKey: 'h', rightKey: 'k' },
+  TRUCK_MEDIUM: { type: 'truck', size: 'medium', upKey: 'u', downKey: 'm', leftKey: '-', rightKey: '-' },
   NEW_TRUCK_BIG: { type: 'new_truck', size: 'big', upKey: '-', downKey: '-', leftKey: '-', rightKey: '-' },
   NEW_TRUCK_SMALL: { type: 'new_truck', size: 'small', upKey: '-', downKey: '-', leftKey: '-', rightKey: '-' }
 };
