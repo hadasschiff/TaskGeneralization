@@ -1,7 +1,60 @@
+// teleprompterTrial.js
 import {createGameUI} from './game.js'
 import {startPracticeTrial} from './practiceTrial.js'
 
-// teleprompterTrial.js
+let recognition = null;          // SpeechRecognition instance
+let lastSpeech  = 0;             // timestamp of the latest speech fragment
+let silenceId   = null;          // interval id
+const SILENCE_TIMEOUT = 4000;    // ms
+let scrollAnimId     = null;   // requestAnimationFrame handle
+let scrollCanceled   = false;  // flag checked inside the loop
+
+function startSpeechMonitoring(onSilence) {
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRec) {
+    console.warn('SpeechRecognition not supported – skipping silence check');
+    return; // graceful degradation
+  }
+
+  recognition = new SpeechRec();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+  lastSpeech = Date.now();
+
+  recognition.onresult = () => {
+    lastSpeech = Date.now(); // we heard something – reset timer
+    console.log('speech heard');          // <- helps you confirm activity
+
+  };
+
+  recognition.onerror = () => {
+    stopSpeechMonitoring();
+    onSilence();
+  };
+
+  recognition.start();
+
+  // watchdog loop
+  silenceId = setInterval(() => {
+    if (Date.now() - lastSpeech > SILENCE_TIMEOUT) {
+      stopSpeechMonitoring();
+      onSilence();
+    }
+  }, 500);
+}
+
+function stopSpeechMonitoring() {
+  if (recognition) {
+    recognition.onresult = null;
+    recognition.onerror  = null;
+    recognition.stop();
+    recognition = null;
+  }
+  clearInterval(silenceId);
+  silenceId = null;
+}
+
 export function startTeleprompterSimulation() {
     const container = document.querySelector('.game-container');
     container.innerHTML = '';
@@ -12,7 +65,8 @@ export function startTeleprompterSimulation() {
     <div class="message-box" style="font-family: 'Segoe UI', sans-serif; padding: 36px 40px; max-width: 700px; margin: auto; text-align: left;">
         <h2 style="color: #1e3c72; text-align: left;">Public Speaking Simulation</h2>
         <p style="text-align: left;">
-        This is a brief simulation of the public speaking task you'll complete later. You'll read from a teleprompter, just like in the actual task. On the right, a simulated live chat will show examples of the kinds of comments you might receive during the real task.</p>
+        This is a brief simulation of the public speaking task you'll complete later. You'll read from a teleprompter, just like in the actual task. On the right, a simulated live chat will show examples of the kinds of comments you might receive during the real task.
+        <br> Some of the comments may come at a delay. </p>
         <p style="text-align: left;">
         When you click "Start Practice", the teleprompter will scroll automatically. Read the text aloud as it appears.</p>
 
@@ -41,11 +95,13 @@ export function startTeleprompterSimulation() {
 }
 
 function showTeleprompterScroll() {
+    scrollCanceled = false;          // <-- reset each time we start
     const container = document.querySelector('.game-container');
     container.innerHTML = '';
 
     const teleprompter = document.createElement('div');
     teleprompter.className = 'teleprompter-box';
+
     const recordingIndicator = document.createElement('div');
     recordingIndicator.className = 'recording-indicator';
     recordingIndicator.innerHTML = ` 
@@ -55,6 +111,7 @@ function showTeleprompterScroll() {
 
     container.appendChild(recordingIndicator);
     container.appendChild(teleprompter);
+
     const text = document.createElement('div');
     text.className = 'teleprompter-text';
     text.innerHTML = `
@@ -68,7 +125,8 @@ function showTeleprompterScroll() {
       Thank you for participating in this practice round.
     `;
     teleprompter.appendChild(text);
-    container.appendChild(teleprompter);
+    startSpeechMonitoring(handleNoSpeech);
+    //container.appendChild(teleprompter);
 
     // Scroll animation
     let start = null;
@@ -77,13 +135,18 @@ function showTeleprompterScroll() {
     const distance = teleprompter.offsetHeight + text.offsetHeight + 50;
 
     function step(timestamp) {
+        if (scrollCanceled) return;    // <-- bail out if we were interrupted
+
         if (!start) start = timestamp;
         const progress = timestamp - start;
         const pct = Math.min(progress / duration, 1);
         text.style.bottom = `${-100 + pct * distance / (teleprompter.offsetHeight / 100)}%`;
         if (pct < 1) {
-            requestAnimationFrame(step);
+            scrollAnimId = requestAnimationFrame(step);  // store id so we can cancel
+
         } else {
+            stopSpeechMonitoring(); // finished successfully
+            scrollAnimId = null;
             showContinueButton();
         }
     }
@@ -110,6 +173,25 @@ function showContinueButton() {
         startPracticeTrial();
     });
     container.appendChild(button);
+}
+
+//If there is silence
+function handleNoSpeech() {
+  scrollCanceled = true;                 // tell the loop to quit
+  cancelAnimationFrame(scrollAnimId);    // stop any queued frame
+  stopSpeechMonitoring();                // (already cleans up the mic)
+  const container = document.querySelector('.game-container');
+  container.innerHTML = '';
+
+  const msg = document.createElement('div');
+  msg.className = 'warning-box';
+  msg.style = 'font-family: "Segoe UI", sans-serif; padding: 40px; max-width: 600px; margin: 80px auto; background: #ffe9e9; border: 2px solid #e63946; border-radius: 8px; text-align: center;';
+  msg.innerHTML = `<h3 style="color:#e63946; margin-bottom: 20px;">You were not speaking.</h3>
+                   <p>If you fail to speak during the task, you will be penalized.</p>
+                   <p>Returning to the instruction</p>`;
+  container.appendChild(msg);
+
+  setTimeout(() => startTeleprompterSimulation(), 4000);
 }
 
 function startLiveChatSimulation() {
