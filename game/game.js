@@ -8,6 +8,9 @@ import { db } from './firebaseconfig.js';
 //import { doc, setDoc } from './firebaseconfig.js';
 import {collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
+//const prolificPID = new URLSearchParams(location.search).get("PROLIFIC_PID") || "unknown";
+//const participantID = `prolific_${prolificPID}`;
+
 function rInt(rng, n) { return Math.floor(rng() * n); }
 
 //maze generator
@@ -227,79 +230,123 @@ function flattenGridWorldToWords(grid) {
   return grid[0].flat();
 }
 
-function sanitizeGameDataForFirestore(data) {
-  const deepCopy = structuredClone(data); // Safe deep copy
+function normaliseGameData(data){
+  const Copy = structuredClone(data); // Safe deep copy
+  const trials = [];
+  const phaseId = { practice: 0, phase1: 1, phase2: 2 };
 
-  function convertActionsArray(arr) {
-    return arr.map(entry => {
-      if (Array.isArray(entry) && entry.length === 4) {
-        return {
-          key: entry[0],
-          direction: entry[1],
-          rt: entry[2],
-          time: entry[3]
-        };
-      } else {
-        return entry;
-      }
+  const tidyActs = arr =>
+    Array.isArray(arr)
+      ? arr.map(e =>
+          Array.isArray(e) && e.length === 4
+            ? { key: e[0], direction: e[1], rt: e[2], time: e[3] }
+            : e)
+      : arr;
+
+  for (const key of ["practice", "phase1", "phase2"]) {
+    (Copy[key] || []).forEach(trial => {
+      if (trial.gridWorld) trial.gridWorld = flattenGridWorldToWords(trial.gridWorld);
+      if (trial.actions)   trial.actions   = tidyActs(trial.actions);
+      if (trial.RT_L)      trial.RT_L      = tidyActs(trial.RT_L);
+      if (trial.RT_P)      trial.RT_P      = tidyActs(trial.RT_P);
+      trials.push({ phase: phaseId[key], ...trial });
     });
   }
 
-  for (const phaseKey of ["practice", "phase1", "phase2"]) {
-    if (Array.isArray(deepCopy[phaseKey])) {
-      deepCopy[phaseKey].forEach(trial => {
-        if (trial.gridWorld) {
-          trial.gridWorld = flattenGridWorldToWords(trial.gridWorld);
-        }
-        if (Array.isArray(trial.actions)) {
-          trial.actions = convertActionsArray(trial.actions);
-        }
-        if (Array.isArray(trial.RT_L)) {
-          trial.RT_L = convertActionsArray(trial.RT_L);
-        }
-        if (Array.isArray(trial.RT_P)) {
-          trial.RT_P = convertActionsArray(trial.RT_P);
-        }
-      });
-    }
-  }
-
-  return deepCopy;
+  return {
+    meta: { totalGameTime: Copy.totalGameTime ?? null },
+    trials
+  };
 }
+
+
+//   function convertActionsArray(arr) {
+//     return arr.map(entry => {
+//       if (Array.isArray(entry) && entry.length === 4) {
+//         return {
+//           key: entry[0],
+//           direction: entry[1],
+//           rt: entry[2],
+//           time: entry[3]
+//         };
+//       } else {
+//         return entry;
+//       }
+//     });
+//   }
+
+//   for (const phaseKey of ["practice", "phase1", "phase2"]) {
+//     if (Array.isArray(Copy[phaseKey])) {
+//       Copy[phaseKey].forEach(trial => {
+//         if (trial.gridWorld) {
+//           trial.gridWorld = flattenGridWorldToWords(trial.gridWorld);
+//         }
+//         if (Array.isArray(trial.actions)) {
+//           trial.actions = convertActionsArray(trial.actions);
+//         }
+//         if (Array.isArray(trial.RT_L)) {
+//           trial.RT_L = convertActionsArray(trial.RT_L);
+//         }
+//         if (Array.isArray(trial.RT_P)) {
+//           trial.RT_P = convertActionsArray(trial.RT_P);
+//         }
+//       });
+//     }
+//   }
+
+//   return Copy;
+// }
 
 function saveGameData() {
   console.log('Saving game data:', (gameState.gameData));
   const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const sanitizedData = sanitizeGameDataForFirestore(gameState.gameData);
+  const sanitizedData = normaliseGameData(gameState.gameData);
+  const timestamp = new Date().toISOString();
+
 
   console.log('Saving game data:', sanitizedData);
 
+  sanitizedData.meta.sessionId = sessionId;
+  sanitizedData.meta.timestamp = timestamp;
   const gameDataRef = doc(collection(db, 'gameSessions'), sessionId);
 
-  setDoc(gameDataRef, {
-    sessionId: sessionId,
-    timestamp: new Date().toISOString(),
-    data: sanitizedData
-  })
+//   const sessionData = {
+//   prolificId: prolificParams.prolificId || null,
+//   studyId: prolificParams.studyId || null,
+//   sessionId: prolificParams.sessionId || null,
+//   startTime: Date.now(),
+//   gameData: normaliseGameData(gameState.gameData)
+// };
+
+// await setDoc(doc(firestore, "sessions", sessionId), sessionData);
+
+
+
+//   setDoc(ref, {
+//   participantID,  
+//   ...sanitizedData.meta,        
+//   trials: sanitizedData.trials
+// });
+
+  setDoc(gameDataRef, sanitizedData) 
   .then(() => console.log (`saved game session: ${sessionId}`))
   .catch((error) => {
     console.error('Error saving game data:', error);
   });
+
+// chnage url to right one 
+  // window.location.href =
+//   "https://app.prolific.com/submissions/complete?cc=CPE3LSVZ";
+
 }
 
-// function extractProlificParams() {
-//   const urlParams = new URLSearchParams(window.location.search);
-//   const prolificPid = urlParams.get('PROLIFIC_PID');
-//   const studyId = urlParams.get('STUDY_ID');
-//   const sessionId = urlParams.get('SESSION_ID');
-  
-//   if (prolificPid) {
-//       console.log('Prolific participant detected:', prolificPid);
-//       // Store these IDs with the game data
-//       gameData.prolificId = prolificPid;
-//       gameData.studyId = studyId;
-//       gameData.sessionId = sessionId;
-//   }
+// function getProlificParams() {
+//   const url = new URL(window.location.href);
+//   return {
+//     prolificId: url.searchParams.get("PROLIFIC_PID") || null,
+//     studyId: url.searchParams.get("STUDY_ID") || null,
+//     sessionId: url.searchParams.get("SESSION_ID") || null
+//   };
 // }
 
 export function initializeGame() {
@@ -830,8 +877,6 @@ function initPlanningInput () {
 
 function startTrialTimer() {
   const trialStartTime = Date.now();
-  //console.log('trial start time:')
-  //console.log(trialStartTime);
   
   // Store initial trial data
   const trialData = {
@@ -850,14 +895,10 @@ function startTrialTimer() {
       rewardsCollected: 0,
       obstaclesHit: 0,
       endTime: null,
-      totalTime: null,
+      //totalTime: null,
       mazeId: gameState.mazeId,
       optimalRoute: gameState.optimalDirections, 
-      //RT_L : gameState.RT_L,
-      //RT_P: gameState.RT_P,
       actions: [],
-      //totalgametime: gameState.totalgametime, 
-      //trialtime: gameState.trialtime,
   
   };
   if (gameState.currentPhase === 1) {
