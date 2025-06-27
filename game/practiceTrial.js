@@ -164,12 +164,20 @@ function checkAnswer(qNum, choice) {
     practiceAnswers[qNum] = choice;
     const feedback = document.getElementById('quiz-feedback');
     if (Object.keys(practiceAnswers).length === 4) {
-        feedback.innerHTML = `
-            <p style="color: #333;"><strong>Check your answers and make sure you understand before continuing.</strong></p>
-            <div style="margin-top: 10px;">
-                <button id="continue-to-game-btn" style="padding: 8px 16px;">Continue</button>
-            </div>
-        `;
+        // Calculate score
+        let correctCount = 0;
+        for (let i = 1; i <= 4; i++) {
+            if (practiceAnswers[i] === correctAnswers[i]) correctCount++;
+        }
+
+        // Feedback and action
+        if (correctCount >= 3) {
+            feedback.innerHTML = `
+                <p style="color: #333;"><strong>Great! You got ${correctCount}/4 correct. make sure you understand before continuing.</strong></p>
+                <div style="margin-top: 10px;">
+                    <button id="continue-to-game-btn" style="padding: 8px 16px;">Continue</button>
+                </div>
+            `;
 
         document.getElementById('continue-to-game-btn').addEventListener('click', () => {
             document.querySelector('.message-overlay').remove();
@@ -178,5 +186,20 @@ function checkAnswer(qNum, choice) {
             game.startLearningPhase();
             game.createTrial(); 
         });
+    } else {
+         feedback.innerHTML = `
+                <p style="color: #e63946;"><strong>You got ${correctCount}/4 correct. You need at least 3 correct answers to continue.</strong></p>
+                <div style="margin-top: 10px;">
+                    <button id="retry-quiz-btn" style="padding: 8px 16px;">Try Again</button>
+                </div>
+            `;
+         document.getElementById('retry-quiz-btn').addEventListener('click', () => {
+                practiceAnswers = {};
+
+                document.querySelector('.message-overlay').remove();
+                gameState.currentPhase = 0;
+                startPracticeTrial(); // restart the practice trial
+            });
+        }
     }
 }
