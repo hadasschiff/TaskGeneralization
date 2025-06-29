@@ -1,4 +1,3 @@
-// Vehicle Navigation Game - Main game functionality and logic
 // Game Configuration
 export const GRID_SIZE = 3;
 // number of repettions for each vehicle type

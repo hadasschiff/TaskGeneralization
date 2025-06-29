@@ -5,11 +5,7 @@ import { gameState } from './gameState.js';
 import * as vehicles from './vehicle.js';
 import * as practice from './practiceTrial.js'
 import { db } from './firebaseconfig.js';
-//import { doc, setDoc } from './firebaseconfig.js';
 import {collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
-
-//const prolificPID = new URLSearchParams(location.search).get("PROLIFIC_PID") || "unknown";
-//const participantID = `prolific_${prolificPID}`;
 
 function rInt(rng, n) { return Math.floor(rng() * n); }
 
@@ -188,7 +184,6 @@ function endGame() {
   // Save completion time
   const completionTime = Date.now();
   gameState.gameData.totalGameTime = completionTime - gameState.gameStartTime;
-  //gameState.totalgametime = completionTime;
   
   // Display completion screen
   container.innerHTML = `
@@ -259,95 +254,47 @@ function normaliseGameData(data){
   };
 }
 
-
-//   function convertActionsArray(arr) {
-//     return arr.map(entry => {
-//       if (Array.isArray(entry) && entry.length === 4) {
-//         return {
-//           key: entry[0],
-//           direction: entry[1],
-//           rt: entry[2],
-//           time: entry[3]
-//         };
-//       } else {
-//         return entry;
-//       }
-//     });
-//   }
-
-//   for (const phaseKey of ["practice", "phase1", "phase2"]) {
-//     if (Array.isArray(Copy[phaseKey])) {
-//       Copy[phaseKey].forEach(trial => {
-//         if (trial.gridWorld) {
-//           trial.gridWorld = flattenGridWorldToWords(trial.gridWorld);
-//         }
-//         if (Array.isArray(trial.actions)) {
-//           trial.actions = convertActionsArray(trial.actions);
-//         }
-//         if (Array.isArray(trial.RT_L)) {
-//           trial.RT_L = convertActionsArray(trial.RT_L);
-//         }
-//         if (Array.isArray(trial.RT_P)) {
-//           trial.RT_P = convertActionsArray(trial.RT_P);
-//         }
-//       });
-//     }
-//   }
-
-//   return Copy;
-// }
-
 function saveGameData() {
   console.log('Saving game data:', (gameState.gameData));
-  const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const sanitizedData = normaliseGameData(gameState.gameData);
   const timestamp = new Date().toISOString();
 
-
   console.log('Saving game data:', sanitizedData);
+  
 
-  sanitizedData.meta.sessionId = sessionId;
+  const { prolificId, studyId, sessionId } = getProlificParams();
+  const finalSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+  sanitizedData.meta.sessionId = finalSessionId;
   sanitizedData.meta.timestamp = timestamp;
-  const gameDataRef = doc(collection(db, 'gameSessions'), sessionId);
+  const gameDataRef = doc(collection(db, 'gameSessions'), finalSessionId);
 
-//   const sessionData = {
-//   prolificId: prolificParams.prolificId || null,
-//   studyId: prolificParams.studyId || null,
-//   sessionId: prolificParams.sessionId || null,
-//   startTime: Date.now(),
-//   gameData: normaliseGameData(gameState.gameData)
-// };
-
-// await setDoc(doc(firestore, "sessions", sessionId), sessionData);
-
-
-
-//   setDoc(ref, {
-//   participantID,  
-//   ...sanitizedData.meta,        
-//   trials: sanitizedData.trials
-// });
-
-  setDoc(gameDataRef, sanitizedData) 
-  .then(() => console.log (`saved game session: ${sessionId}`))
+  const sessionData = {
+  prolificId: prolificId || null,
+  studyId: studyId || null,
+  sessionId: finalSessionId,
+  startTime: Date.now(),
+  gameData: normaliseGameData(gameState.gameData)
+};
+ 
+ setDoc(gameDataRef, sessionData) 
+ .then(() => console.log (`saved game session: ${finalSessionId}`))
   .catch((error) => {
     console.error('Error saving game data:', error);
   });
 
-// chnage url to right one 
-  // window.location.href =
-//   "https://app.prolific.com/submissions/complete?cc=CPE3LSVZ";
-
+  window.location.href =
+     "https://app.prolific.com/submissions/complete?cc=C1C88DFD"
 }
 
-// function getProlificParams() {
-//   const url = new URL(window.location.href);
-//   return {
-//     prolificId: url.searchParams.get("PROLIFIC_PID") || null,
-//     studyId: url.searchParams.get("STUDY_ID") || null,
-//     sessionId: url.searchParams.get("SESSION_ID") || null
-//   };
-// }
+function getProlificParams() {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    prolificId: params.get('PROLIFIC_PID'),
+    studyId: params.get('STUDY_ID'),
+    sessionId: params.get('SESSION_ID')
+  };
+}
 
 export function initializeGame() {
   // Reset container styles for game
@@ -619,8 +566,6 @@ function showTrialInstructions(page = 1) {
     document.getElementById('start-trial-btn').addEventListener('click', () => {
       overlay.remove();
       teleprompter.startTeleprompterSimulation()
-      //createGameUI();
-      //practice.startPracticeTrial();
     });
   }
 }
@@ -760,9 +705,6 @@ export function updateVehicleInfo() {
   }
 
   if (gameState.currentPhase === 1 || gameState.currentPhase === 0) {
-   // const movementInstructionsEl = document.getElementById('movement-instructions');
-
-  
     movementInstructionsEl.innerHTML = `
   <h3 class="keys-title">Keys</h3>
   <div class="key-diamond">
@@ -789,8 +731,6 @@ export function updateVehicleInfo() {
 `;
 
     movementInstructionsEl.style.display = 'flex';
-    
-    //movementInstructionsEl.style.display = 'block';
     planningControlsEl.style.display = 'none';
   
   } else if (gameState.currentPhase === 2) {
@@ -806,11 +746,9 @@ export function updateVehicleInfo() {
 }
   
 function initPlanningInput () {
-  //console.log('went into init planning input function');
   const boxes = document.querySelectorAll('.move-box');
   const btn = document.getElementById('submit-plan');
   
-
   boxes.forEach((box, idx) => {
     box.addEventListener('keydown', (e) => {
     const trialIndex = gameState.currentTrial - 1;
@@ -823,7 +761,6 @@ function initPlanningInput () {
       currentTrialData.rawInputKeys = [];
     }
       currentTrialData.rawInputKeys.push(e.key);
-      //console.log("Raw input so far:", currentTrialData.rawInputKeys.join(''));
 
       const isLetter = /^[a-zA-Z]$/.test(e.key);
       const isBackspace = e.key === 'Backspace';
@@ -865,8 +802,6 @@ function initPlanningInput () {
     });
   });
 
-
-
   btn.addEventListener('click', () => {
     const sequence = [...boxes].map(b => b.value.toLowerCase()).join('');
     const trialIndex = gameState.currentTrial - 1;
@@ -895,7 +830,6 @@ function startTrialTimer() {
       rewardsCollected: 0,
       obstaclesHit: 0,
       endTime: null,
-      //totalTime: null,
       mazeId: gameState.mazeId,
       optimalRoute: gameState.optimalDirections, 
       actions: [],
@@ -991,7 +925,6 @@ function checkCollisions() {
       const currentTrialData = getCurrentTrialData();
       if (!currentTrialData) return;
       
-      //if (!currentTrialData.hits) currentTrialData.hits = [];
       currentTrialData.hits.push('reward');
       currentTrialData.rewardsCollected++;
   }
@@ -1014,10 +947,7 @@ function endTrial() {
   const currentTrialData = getCurrentTrialData();
   if (!currentTrialData) return;
   currentTrialData.endTime = Date.now();
-  //console.log('trial end time:');
-  //console.log(currentTrialData.endTime)
   currentTrialData.totalTime = currentTrialData.endTime - currentTrialData.startTime;
-  //currentTrialData.endPosition = { x: gameState.currentVehicle.x, y: gameState.currentVehicle.y };
 
   console.log(`Hits during trial ${gameState.currentTrial}:`);
   console.log(currentTrialData.hits);
@@ -1027,9 +957,7 @@ function endTrial() {
     const optimal = maze.optimalDirections;
     const actual = currentTrialData.routeTaken || [];
     console.table(currentTrialData.actions);
-    //gameState.RT_L = structuredClone(currentTrialData.actions);
     currentTrialData.RT_L = structuredClone(currentTrialData.actions);
-
 
     let matchCount = 0;
     for (let i = 0; i < optimal.length; i++) {
@@ -1037,13 +965,9 @@ function endTrial() {
     }
   
     const accuracy = matchCount / optimal.length;
-    //console.log(`Optimal: ${optimal.join(', ')}`);
     console.log(`Players actions:  ${actual.join(', ')}`);  
-    //currentTrialData.matchAccuracy = accuracy;
-    //const totalTrialTime = Date.now() - currentTrialData.startTime;
     const totalTrialTime = currentTrialData.lastValidKeyTime - currentTrialData.startTime;
     console.log("Total Trial Time:", totalTrialTime, "ms");
-    //gameState.trialtime = totalTrialTime;
     currentTrialData.trialtime = totalTrialTime;
     delete currentTrialData.actions;
     delete currentTrialData.lastValidKeyTime;
@@ -1057,7 +981,6 @@ function endTrial() {
 
 function showTrialResults() {
   gameState.inputEnabled = false;
-  //console.log('trial ended');
 
   const container = document.querySelector('.game-container');
   let fadeOverlay = document.querySelector('.fade-overlay');
@@ -1278,9 +1201,6 @@ function submitPlan(sequence, rawInputKeys) {
   // Also get the optimal directions from the maze used in this trial
   const mazeused = gameState.PLAN_POOL[gameState.planOrder[gameState.currentTrial- 1]];
   console.log(mazeused);
-  //currentTrialData.mazeId = m.id;
-  //currentTrialData.planOrderIndex = gameState.planOrder[gameState.currentTrial- 1]; // index used
-  //currentTrialData.optimalDirections = mazeused.optimalDirections;
 
   let simulatedX = mazeused.start.x;
   let simulatedY = mazeused.start.y;
@@ -1308,23 +1228,17 @@ function submitPlan(sequence, rawInputKeys) {
     simulatedY = nextY;
 
     tile = mazeused.grid[simulatedY][simulatedX];
-    //console.log(`At (${simulatedY}, ${simulatedX}): tile =`, tile);
     if (tile === 'reward') {
         hitsDuringPlan.push('reward');
-        //console.log('hit reward');
         mazeused.grid[simulatedY][simulatedX] = 'empty'; // mark as collected
-
     } else if (tile === 'obstacle') {
         hitsDuringPlan.push('obstacle');
-        //console.log('hit obstacle');
     } else if (tile === 'terminator') {
         hitsDuringPlan.push('terminator');
-        //console.log('hit terminator ');
         break; 
     } else {
         hitsDuringPlan.push('empty');
     }
-
     }
 
   currentTrialData.hits = hitsDuringPlan;
@@ -1359,23 +1273,12 @@ function submitPlan(sequence, rawInputKeys) {
   
   currentTrialData.endTime = Date.now();
   currentTrialData.totalTime = currentTrialData.endTime - currentTrialData.startTime;
-  //console.log('total time');
-  //console.log(currentTrialData.totalTime)
   console.log(`Planning RT for this trial (ms): ${currentTrialData.totalTime}`);
-  //gameState.RT_P = currentTrialData.totalTime;
-  //gameState.trialtime = currentTrialData.totalTime;
   currentTrialData.RT_P = currentTrialData.totalTime;
   currentTrialData.trialtime = currentTrialData.totalTime;
 
-
-  //console.log(`Planning RT for this trial (s): ${(currentTrialData.totalTime / 1000).toFixed(2)} seconds`);
-
-
   currentTrialData.inputSequence = moveSequence;
   
-  // Clear the input field
-  //moveSequenceInput.value = '';
-
   document.querySelectorAll('.move-box').forEach(box => box.value = '');
   document.getElementById('submit-plan').disabled = true;
   document.querySelector('.move-box').focus();
