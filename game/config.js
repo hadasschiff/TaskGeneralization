@@ -6,12 +6,12 @@ export const PLANNING_TRIALS = 10; // change after to 10
 
 // Vehicle types and controls
 export const VEHICLE_TYPES = {
-  CAR_SMALL: { type: 'car', size: 'small', upKey: 'e', downKey: 'c', leftKey: 'a', rightKey: 'd' },
-  CAR_BIG: { type: 'car', size: 'big', upKey: 'e', downKey: 'c', leftKey: 's', rightKey: 'f' },
+  CAR_SMALL: { type: 'car', size: 'small', upKey: 'e', downKey: 'c', leftKey: 'q', rightKey: 'w' },
+  CAR_BIG: { type: 'car', size: 'big', upKey: 'e', downKey: 'c', leftKey: 'z', rightKey: 'x' },
   CAR_MEDIUM: { type: 'car', size: 'medium', upKey: 'e', downKey: 'c', leftKey: '-', rightKey: '-' },
-  TRUCK_SMALL: { type: 'truck', size: 'small', upKey: 'u', downKey: 'm', leftKey: 'g', rightKey: 'j' },
-  TRUCK_BIG: { type: 'truck', size: 'big', upKey: 'u', downKey: 'm', leftKey: 'h', rightKey: 'k' },
-  TRUCK_MEDIUM: { type: 'truck', size: 'medium', upKey: 'u', downKey: 'm', leftKey: '-', rightKey: '-' },
+  TRUCK_SMALL: { type: 'truck', size: 'small', upKey: 't', downKey: 'b', leftKey: 'y', rightKey: 'u' },
+  TRUCK_BIG: { type: 'truck', size: 'big', upKey: 't', downKey: 'b', leftKey: 'n', rightKey: 'm' },
+  TRUCK_MEDIUM: { type: 'truck', size: 'medium', upKey: 't', downKey: 'b', leftKey: '-', rightKey: '-' },
   NEW_TRUCK_BIG: { type: 'new_truck', size: 'big', upKey: '-', downKey: '-', leftKey: '-', rightKey: '-' },
   NEW_TRUCK_SMALL: { type: 'new_truck', size: 'small', upKey: '-', downKey: '-', leftKey: '-', rightKey: '-' }
 };
