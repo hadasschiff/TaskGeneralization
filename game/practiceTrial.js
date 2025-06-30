@@ -28,10 +28,12 @@ export function startPracticeTrial() {
         { x: 0, y: 2 }
       ];
       
-      gameState.obstacles = [
-        { x: 2, y: 1 },
-        { x: 2, y: 2 }
-      ];
+    //   gameState.obstacles = [
+    //     { x: 2, y: 1 },
+    //     { x: 2, y: 2 }
+    //   ];
+    gameState.obstacles  = [];   
+    gameState.terminator = { x: 2, y: 2 };  
 
     gameState.gridWorld = Array.from({ length: config.GRID_SIZE }, () =>
         Array.from({ length: config.GRID_SIZE }, () => 'empty')
@@ -41,9 +43,12 @@ export function startPracticeTrial() {
         gameState.gridWorld[pos.y][pos.x] = 'reward';
     });
     
-    gameState.obstacles.forEach(pos => {
-        gameState.gridWorld[pos.y][pos.x] = 'obstacle';
-    });
+    // gameState.obstacles.forEach(pos => {
+    //     gameState.gridWorld[pos.y][pos.x] = 'obstacle';
+    // });
+
+    const t = gameState.terminator;
+    gameState.gridWorld[t.y][t.x] = 'terminator';
 
     game.createGameUI();
     vehicle.renderVehiclePreview();

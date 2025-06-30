@@ -188,7 +188,7 @@ function handleNoSpeech() {
   msg.style = 'font-family: "Segoe UI", sans-serif; padding: 40px; max-width: 600px; margin: 80px auto; background: #ffe9e9; border: 2px solid #e63946; border-radius: 8px; text-align: center;';
   msg.innerHTML = `<h3 style="color:#e63946; margin-bottom: 20px;">You were not speaking.</h3>
                    <p>If you fail to speak during the task, you will be penalized.</p>
-                   <p>Returning to the instruction</p>`;
+                   <p>Returning to the instructions</p>`;
   container.appendChild(msg);
 
   setTimeout(() => startTeleprompterSimulation(), 4000);

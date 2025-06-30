@@ -578,6 +578,10 @@ function showTrialInstructions(page = 1) {
     document.getElementById('start-trial-btn').addEventListener('click', () => {
       overlay.remove();
       teleprompter.startTeleprompterSimulation()
+      //createGameUI();
+      //practice.startPracticeTrial();
+
+
     });
   }
 }
@@ -651,7 +655,9 @@ export function renderGrid() {
               cellEl.innerHTML = '💰';
           } else if (gameState.gridWorld[y][x] === 'terminator') {
               cellEl.classList.add('terminator');
-              cellEl.innerHTML = '❌'; 
+              cellEl.innerHTML = '✖';
+              // cellEl.innerHTML = '✖️'; 
+              // cellEl.style.color = '#000';
           }
           
           // Add vehicle if this is vehicle position
@@ -941,10 +947,19 @@ function checkCollisions() {
       currentTrialData.rewardsCollected++;
   }
   if (gameState.gridWorld[gameState.currentVehicle.y][gameState.currentVehicle.x] === 'terminator') {
+    gameState.inputEnabled = false
     console.log("Hit terminator tile. Ending trial.");
     currentTrialData.hits.push('terminator');
-    setTimeout(endTrial, 0);
+    if (gameState.currentPhase === 0) {   // practice phase
+      // jump to your helper that shows the quiz / retry screen
+      setTimeout(practice.endPracticeTrial, 0);
+    } else {
+      // learning & planning phases keep the normal flow
+      setTimeout(endTrial, 0);
+    }
   }
+        
+  
   // Check if all rewards are collected or no more moves possible
   if (gameState.rewards.length === 0 || (gameState.obstacles.length === 0 && gameState.rewards.length === 0)) {
     setTimeout(endTrial, 0); 
