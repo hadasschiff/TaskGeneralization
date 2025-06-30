@@ -178,7 +178,7 @@ function checkAnswer(qNum, choice) {
         // Feedback and action
         if (correctCount >= 4) {
             feedback.innerHTML = `
-                <p style="color: #333;"><strong>Great! You got ${correctCount}/4 correct. make sure you understand before continuing.</strong></p>
+                <p style="color: #333;"><strong>Great! You got ${correctCount}/5 correct. make sure you understand before continuing.</strong></p>
                 <div style="margin-top: 10px;">
                     <button id="continue-to-game-btn" style="padding: 8px 16px;">Continue</button>
                 </div>
@@ -193,7 +193,7 @@ function checkAnswer(qNum, choice) {
         });
     } else {
          feedback.innerHTML = `
-                <p style="color: #e63946;"><strong>You got ${correctCount}/4 correct. You need at least 4 correct answers to continue.</strong></p>
+                <p style="color: #e63946;"><strong>You got ${correctCount}/5 correct. You need at least 4 correct answers to continue.</strong></p>
                 <div style="margin-top: 10px;">
                     <button id="retry-quiz-btn" style="padding: 8px 16px;">Try Again</button>
                 </div>
