@@ -536,7 +536,7 @@ function showTrialInstructions(page = 1) {
         <h2 style="font-size: 2rem; color: #1e3c72; margin-bottom: 20px; text-align: left;">Reminder</h2>
 
         <p style="font-size: 1.2rem; margin: 12px 0; line-height: 1.6 ; text-align: left;">
-          <strong>Some vehicles will NOT tell you how to navigate around the maze,</strong> So you can prepare for these vechicles by learning to naviage that ones that do.
+          <strong>Some vehicles will NOT tell you how to navigate around the maze,</strong> So you can prepare to use these vechicles by learning to navigate the vehicles you see in the learning phase. 
         </p>
 
         <p style="font-size: 1.1rem; margin: 12px 0; text-align: left;">

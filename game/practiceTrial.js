@@ -123,6 +123,11 @@ function showPracticeQuestions() {
             <button data-question="4" data-choice="B">B) Every second trial</button>
             <button data-question="4" data-choice="C">C) A few randomly selected ones</button>
 
+            <p>5. What happens when you hit the terminator tile (❌)?</p>
+            <button data-question="5" data-choice="A">A) You lose points</button>
+            <button data-question="5" data-choice="B">B) The trial simply ends</button>
+            <button data-question="5" data-choice="C">C) You skip to the next phase</button>
+
             <div id="quiz-feedback" style="margin-top: 20px;"></div>
         </div>
     `;
@@ -145,7 +150,7 @@ function checkAnswer(qNum, choice) {
     const allButtons = document.querySelectorAll(`button[data-question='${qNum}']`);
     allButtons.forEach(btn => btn.disabled = true);
     const clickedBtn = document.querySelector(`button[data-question='${qNum}'][data-choice='${choice}']`);
-    const correctAnswers = {1: 'B', 2: 'A', 3: 'B', 4:'C'};
+    const correctAnswers = {1: 'B', 2: 'A', 3: 'B', 4:'C', 5:'B'};
 
     const isCorrect = correctAnswers[qNum] === choice;
     if (isCorrect) {
@@ -163,15 +168,15 @@ function checkAnswer(qNum, choice) {
 
     practiceAnswers[qNum] = choice;
     const feedback = document.getElementById('quiz-feedback');
-    if (Object.keys(practiceAnswers).length === 4) {
+    if (Object.keys(practiceAnswers).length === 5) {
         // Calculate score
         let correctCount = 0;
-        for (let i = 1; i <= 4; i++) {
+        for (let i = 1; i <= 5; i++) {
             if (practiceAnswers[i] === correctAnswers[i]) correctCount++;
         }
 
         // Feedback and action
-        if (correctCount >= 3) {
+        if (correctCount >= 4) {
             feedback.innerHTML = `
                 <p style="color: #333;"><strong>Great! You got ${correctCount}/4 correct. make sure you understand before continuing.</strong></p>
                 <div style="margin-top: 10px;">
@@ -188,7 +193,7 @@ function checkAnswer(qNum, choice) {
         });
     } else {
          feedback.innerHTML = `
-                <p style="color: #e63946;"><strong>You got ${correctCount}/4 correct. You need at least 3 correct answers to continue.</strong></p>
+                <p style="color: #e63946;"><strong>You got ${correctCount}/4 correct. You need at least 4 correct answers to continue.</strong></p>
                 <div style="margin-top: 10px;">
                     <button id="retry-quiz-btn" style="padding: 8px 16px;">Try Again</button>
                 </div>
