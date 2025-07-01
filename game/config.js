@@ -2,7 +2,7 @@
 export const GRID_SIZE = 3;
 // number of repettions for each vehicle type
 export const LEARNING_TRIALS = 15; // change after to 15
-export const PLANNING_TRIALS = 3; // change after to 10
+//export const PLANNING_TRIALS = 3; // change after to 3
 
 // Vehicle types and controls
 export const VEHICLE_TYPES = {
@@ -15,6 +15,16 @@ export const VEHICLE_TYPES = {
   PICKUP_TRUCK_BIG: { type: 'pickup_truck', size: 'big', upKey: '-', downKey: '-', leftKey: '-', rightKey: '-' },
   PICKUP_TRUCK_SMALL: { type: 'pickup_truck', size: 'small', upKey: '-', downKey: '-', leftKey: '-', rightKey: '-' },
   PICKUP_TRUCK_MEDIUM: { type: 'pickup_truck', size: 'medium', upKey: 'r', downKey: 'v', leftKey: 'y', rightKey: 'u' }
+};
+
+// config.js
+export const PLANNING_REPS = {
+  car_small: 3,
+  car_big: 3,
+  car_medium: 6,
+  truck_medium: 3,
+  pickup_truck_medium: 3,
+
 };
 
 export const LEARN_ALLOWED = new Set(['truck_medium', 'pickup_truck_medium', 'car_small', 'car_big']);

@@ -503,8 +503,8 @@ function generateVehicleQueue() {
     }
   gameState.vehicleTrialQueueLearn = learnQueue;
   console.log('vehicleTrialQueueLearn');
-
   console.log(gameState.vehicleTrialQueueLearn);
+
   gameState.LEARN_POOL = makeMazePool(gameState.vehicleTrialQueueLearn, 'maze-learn-v1', 'L');
   gameState.learnOrder = shuffleArray([...Array(gameState.LEARN_POOL.length).keys()]);
 
@@ -516,8 +516,11 @@ function generateVehicleQueue() {
       continue;
     } 
 
-    for (let i = 0; i < config.PLANNING_TRIALS; i++) {
-      console.log('Using reps', config.PLANNING_TRIALS, 'for', v.type, v.size);
+    const key  = `${v.type}_${v.size}`;
+    const reps = config.PLANNING_REPS[key] ?? DEFAULT_PLANNING_REPS;
+
+    for (let i = 0; i < reps; i++) {
+      console.log('Using reps', reps, 'for', v.type, v.size);
       planQueue.push({
         type: v.type,
         size: v.size,
@@ -526,6 +529,9 @@ function generateVehicleQueue() {
     }
   }
   gameState.vehicleTrialQueuePlan = planQueue;
+  console.log('vehicleTrialQueuePlan');
+  console.log(gameState.vehicleTrialQueuePlan);
+
   gameState.PLAN_POOL = makeMazePool(gameState.vehicleTrialQueuePlan, 'maze-plan-v1', 'P');
   gameState.planOrder = shuffleArray([...Array(gameState.PLAN_POOL.length).keys()]);
 
@@ -619,8 +625,15 @@ function showTrialInstructions(page = 1) {
     document.getElementById('start-trial-btn').addEventListener('click', () => {
       overlay.remove();
       teleprompter.startTeleprompterSimulation()
+
       //createGameUI();
       //practice.startPracticeTrial();
+
+      // gameState.currentPhase = 1;
+      // createGameUI();
+      // startLearningPhase();
+      // createTrial(); 
+
     });
   }
 }
