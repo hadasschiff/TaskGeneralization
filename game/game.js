@@ -9,6 +9,48 @@ import {collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.9.
 
 function rInt(rng, n) { return Math.floor(rng() * n); }
 
+const vehicleColorQueuesLearn = {};
+const vehicleColorQueuesPlan = {};
+
+Object.values(config.VEHICLE_TYPES).forEach(vehicle => {
+  const key = `${vehicle.type}_${vehicle.size}`;
+  //vehicleColorQueuesLearn[key] = shuffleArray([...config.COLOR_PALETTE_LEARN]);
+
+  const repeats = 3; //number of times each vehicle needs to repeat colors in learning trials
+  const expandedPalette = [];
+
+  for (let i = 0; i < repeats; i++) {
+    expandedPalette.push(...config.COLOR_PALETTE_LEARN);
+  }
+  vehicleColorQueuesLearn[key] = shuffleArray(expandedPalette);
+
+  vehicleColorQueuesPlan[key] = shuffleArray([...config.COLOR_PALETTE_PLAN]);
+});
+
+// Print queues
+console.log("=== COLOR QUEUES: LEARNING PHASE ===");
+Object.entries(vehicleColorQueuesLearn).forEach(([vehicleKey, queue]) => {
+  console.log(`${vehicleKey}:`, queue);
+});
+
+console.log("=== COLOR QUEUES: PLANNING PHASE ===");
+Object.entries(vehicleColorQueuesPlan).forEach(([vehicleKey, queue]) => {
+  console.log(`${vehicleKey}:`, queue);
+});
+
+
+// const vehicleColorQueues = {
+//   car_small: shuffleArray(config.COLOR_PALETTE),
+//   car_big: shuffleArray(config.COLOR_PALETTE),
+//   car_medium: shuffleArray(config.COLOR_PALETTE),
+//   truck_small: shuffleArray(config.COLOR_PALETTE),
+//   truck_big: shuffleArray(config.COLOR_PALETTE),
+//   truck_medium: shuffleArray(config.COLOR_PALETTE),
+//   pickup_truck_small:shuffleArray(config.COLOR_PALETTE),
+//   pickup_truck_big: shuffleArray(config.COLOR_PALETTE),
+//   pickup_truck_medium: shuffleArray(config.COLOR_PALETTE),
+// };
+
 //maze generator
 function buildMaze(rng, vehicleType) {
   const g = Array.from({length: config.GRID_SIZE}, _=>Array(config.GRID_SIZE).fill('empty'));
@@ -70,7 +112,7 @@ function buildMaze(rng, vehicleType) {
   let terminator = null;
   let obstacles = [];
   const isCar = vehicleType.type.startsWith('car');
-  const isTruck = vehicleType.type.startsWith('truck') || vehicleType.type.startsWith('new_truck');
+  const isTruck = vehicleType.type.startsWith('truck') || vehicleType.type.startsWith('pickup_truck');
 
   if (isTruck) {
     let placed = 0;
@@ -164,16 +206,7 @@ function shuffleArray(arr) {
   return copy;
 }
 
-const vehicleColorQueues = {
-  car_small: shuffleArray(config.COLOR_PALETTE),
-  car_big: shuffleArray(config.COLOR_PALETTE),
-  car_medium: shuffleArray(config.COLOR_PALETTE),
-  truck_small: shuffleArray(config.COLOR_PALETTE),
-  truck_big: shuffleArray(config.COLOR_PALETTE),
-  truck_medium: shuffleArray(config.COLOR_PALETTE),
-  new_truck_small:shuffleArray(config.COLOR_PALETTE),
-  new_truck_big: shuffleArray(config.COLOR_PALETTE)
-};
+
 
 function endGame() {
   console.log('Game completed');
@@ -282,8 +315,8 @@ try {
   console.log(`saved game session: ${finalSessionId}`);
 
   // *only* after Firestore says “OK” do we redirect
-  window.location.href =
-    "https://app.prolific.com/submissions/complete?cc=C1C88DFD";
+  // window.location.href =
+  //   "https://app.prolific.com/submissions/complete?cc=C1C88DFD";
 } catch (err) {
   console.error('Error saving game data:', err);
   alert("We couldn’t save your data automatically. " +
@@ -453,9 +486,10 @@ function generateVehicleQueue() {
   console.log('Phase:', gameState.currentPhase, 'Vehicles:', vehicleTypes.length);
   //Learning Phase Queue
   const learnQueue = [];
+
   for (const v of vehicleTypes) {
-    if (v.type === 'new_truck' || v.size === 'medium'){
-      console.log('Skipping', v.type, v.size);
+    if (!config.LEARN_ALLOWED.has(`${v.type}_${v.size}`)) {
+      console.log('Skipping for learning phase', v.type, v.size);
       continue;
     } 
     for (let i = 0; i < config.LEARNING_TRIALS; i++) {
@@ -468,15 +502,22 @@ function generateVehicleQueue() {
       }
     }
   gameState.vehicleTrialQueueLearn = learnQueue;
-  //console.log("vehicleTrialQueueLearn:", gameState.vehicleTrialQueueLearn);
+  console.log('vehicleTrialQueueLearn');
 
+  console.log(gameState.vehicleTrialQueueLearn);
   gameState.LEARN_POOL = makeMazePool(gameState.vehicleTrialQueueLearn, 'maze-learn-v1', 'L');
   gameState.learnOrder = shuffleArray([...Array(gameState.LEARN_POOL.length).keys()]);
 
   //Planning Phase Queue
   const planQueue = [];
   for (const v of vehicleTypes) {
+    if (!config.PLAN_ALLOWED.has(`${v.type}_${v.size}`)) {
+      console.log('Skipping for planning phase', v.type, v.size);
+      continue;
+    } 
+
     for (let i = 0; i < config.PLANNING_TRIALS; i++) {
+      console.log('Using reps', config.PLANNING_TRIALS, 'for', v.type, v.size);
       planQueue.push({
         type: v.type,
         size: v.size,
@@ -524,7 +565,7 @@ function showTrialInstructions(page = 1) {
         </div>
 
         <p style="font-size: 1.1rem; margin: 12px 0; text-align: left;">
-        <strong>Some trials will have no obstacles.</strong> In those trials, you'll see a <strong style="color: black;">❌</strong>. Reaching it will end the trial with <strong style="color: green;">no penalty</strong>.</p>
+        <strong>Some trials will have no obstacles.</strong> In those trials, you'll see a <strong style="color: black;">✖</strong>. Reaching it will end the trial with <strong style="color: green;">no penalty</strong>.</p>
 
         <p style="font-size: 1.1rem; margin: 12px 0; text-align: left;">
 
@@ -580,8 +621,6 @@ function showTrialInstructions(page = 1) {
       teleprompter.startTeleprompterSimulation()
       //createGameUI();
       //practice.startPracticeTrial();
-
-
     });
   }
 }
@@ -610,14 +649,21 @@ export function createTrial() {
 
   // Select color
   const key = `${gameState.currentVehicle.type}_${gameState.currentVehicle.size}`;
-  const queue = vehicleColorQueues[key];
+  let queue;
+  queue = vehicleColorQueuesLearn[key];
+
+  // const queue = vehicleColorQueues[key];
   const colorIndex = Math.floor((gameState.currentTrial- 1) / 4) % 20;
   // Get a color and assign to vehicle
   gameState.currentVehicle.color = queue.shift();
+  console.log("Assigned color:", gameState.currentVehicle.color);
 
-  // if the queue runs out (all 20 colors used), re-shuffle
+
+  // if the queue runs out (all 5 colors used), re-shuffle
   if (queue.length === 0) {
-    vehicleColorQueues[key] = shuffleArray(config.COLOR_PALETTE);
+    //vehicleColorQueues[key] = shuffleArray(config.COLOR_PALETTE);
+    //vehicleColorQueuesLearn[key] = shuffleArray([config.COLOR_PALETTE_LEARN]);
+    vehicleColorQueuesLearn[key] = shuffleArray([...config.COLOR_PALETTE_LEARN]);
   }
 
   // Reset maze
@@ -631,7 +677,7 @@ export function createTrial() {
 }
 
 function vehicleAllowsObstacles(vehicle) {
-  return (vehicle.type.startsWith('truck') || vehicle.type === 'new_truck');}
+  return (vehicle.type.startsWith('truck') || vehicle.type === 'pickup_truck');}
 
 export function renderGrid() {
   const gridEl = document.getElementById('game-grid');
@@ -1069,11 +1115,11 @@ function startPlanningPhase() {
   gameState.currentPhase = 2;
   gameState.currentTrial= 1;
 
-  const allVehicleTypes = ['car_small', 'car_medium', 'car_big', 'truck_small', 'truck_medium', 'truck_big', 'new_truck_small', 'new_truck_big'];
+  const allVehicleTypes = ['car_small', 'car_medium', 'car_big', 'truck_small', 'truck_medium', 'truck_big', 'pickup_truck_small', 'pickup_truck_big'];
   
-  allVehicleTypes.forEach(key => {
-    vehicleColorQueues[key] = shuffleArray(config.COLOR_PALETTE.slice());
-  });
+  // allVehicleTypes.forEach(key => {
+  //   vehicleColorQueues[key] = shuffleArray(config.COLOR_PALETTE.slice());
+  // });
   
   // hiding score bar
   const headerBar = document.querySelector('.header-bar');
@@ -1081,8 +1127,7 @@ function startPlanningPhase() {
     headerBar.style.display = 'none';
   }
  
-  // Convert grid to planning mode
-  convertToPlanningMode();
+
   // Reset game data for phase 2
   gameState.gameData.phase2 = [];
   // Show instructions for first planning trial
@@ -1134,6 +1179,8 @@ function showPlanningInstructions() {
   const startButton = document.getElementById('start-trial-btn');
   startButton.addEventListener('click', function() {
       overlay.remove();
+      // Convert grid to planning mode
+      //convertToPlanningMode();
       createPlanningTrial();
       document.querySelector('.move-box').focus();
 
@@ -1152,14 +1199,19 @@ function createPlanningTrial() {
 }
   const vehicleData = maze.vehicleType;
   const key = `${vehicleData.type}_${vehicleData.size}`;
-  let queue = vehicleColorQueues[key];
+  let queue;
+  queue = vehicleColorQueuesPlan[key];
+  //let queue = vehicleColorQueues[key];
 
   if (!queue || queue.length === 0) {
-    queue = shuffleArray(config.COLOR_PALETTE.slice());
-    vehicleColorQueues[key] = queue;
+    //queue = shuffleArray(config.COLOR_PALETTE.slice());
+    vehicleColorQueuesPlan[key] = shuffleArray([...config.COLOR_PALETTE_PLAN]);
+    //vehicleColorQueues[key] = queue;
   }
-
   const color = queue.shift();
+  console.log("Assigned color:", color);
+
+
   gameState.currentVehicle = {
     type: vehicleData.type,
     size: vehicleData.size,
