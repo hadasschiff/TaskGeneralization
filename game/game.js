@@ -9,6 +9,13 @@ import {collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.9.
 
 function rInt(rng, n) { return Math.floor(rng() * n); }
 
+let highObstacleVehicleKey = null;
+function obstacleProbabilityFor(key, inPlanningPhase = false) {
+  if (inPlanningPhase) return 1.0;                   // 100 %
+  if (key === highObstacleVehicleKey) return 0.8;    // 80 %
+  return 0.2;                                        // 20 %
+}
+
 const vehicleColorQueuesLearn = {};
 const vehicleColorQueuesPlan = {};
 
@@ -28,15 +35,15 @@ Object.values(config.VEHICLE_TYPES).forEach(vehicle => {
 });
 
 // Print queues
-console.log("=== COLOR QUEUES: LEARNING PHASE ===");
-Object.entries(vehicleColorQueuesLearn).forEach(([vehicleKey, queue]) => {
-  console.log(`${vehicleKey}:`, queue);
-});
+// console.log("=== COLOR QUEUES: LEARNING PHASE ===");
+// Object.entries(vehicleColorQueuesLearn).forEach(([vehicleKey, queue]) => {
+//   console.log(`${vehicleKey}:`, queue);
+// });
 
-console.log("=== COLOR QUEUES: PLANNING PHASE ===");
-Object.entries(vehicleColorQueuesPlan).forEach(([vehicleKey, queue]) => {
-  console.log(`${vehicleKey}:`, queue);
-});
+// console.log("=== COLOR QUEUES: PLANNING PHASE ===");
+// Object.entries(vehicleColorQueuesPlan).forEach(([vehicleKey, queue]) => {
+//   console.log(`${vehicleKey}:`, queue);
+// });
 
 
 // const vehicleColorQueues = {
@@ -111,10 +118,14 @@ function buildMaze(rng, vehicleType) {
   // add terminator or obstacles depending on vehicle type
   let terminator = null;
   let obstacles = [];
-  const isCar = vehicleType.type.startsWith('car');
-  const isTruck = vehicleType.type.startsWith('truck') || vehicleType.type.startsWith('pickup_truck');
 
-  if (isTruck) {
+
+  // Decide from per-trial probability
+  const placeObstacles = rng() < (vehicleType.obstacleProb ?? 0);
+  //const isCar = vehicleType.type.startsWith('car');
+  //const isTruck = vehicleType.type.startsWith('truck') || vehicleType.type.startsWith('pickup_truck');
+
+  if (placeObstacles) {
     let placed = 0;
     while (placed < 2) {
       const ox = rInt(rng, config.GRID_SIZE);
@@ -127,7 +138,8 @@ function buildMaze(rng, vehicleType) {
       placed++;
     }
 
-  } else if (isCar) {
+  } else {
+    //single terminator
     let placed = false;
     while (!placed) {
       const tx = rInt(rng, config.GRID_SIZE);
@@ -140,6 +152,10 @@ function buildMaze(rng, vehicleType) {
       placed = true;
     }
   }
+
+  //console.log(`Building maze for vehicle: ${vehicleType.type}_${vehicleType.size}`);
+  //console.log(`Obstacle probability for this trial: ${vehicleType.obstacleProb ?? 'not set'}`);
+
   return { grid: g, start, rewards, optimalDirections, terminator, obstacles, vehicleType };
 }
 
@@ -483,27 +499,61 @@ export function startLearningPhase() {
 
 function generateVehicleQueue() {
   const vehicleTypes = Object.values(config.VEHICLE_TYPES);
-  console.log('Phase:', gameState.currentPhase, 'Vehicles:', vehicleTypes.length);
+  console.log('Phase:', gameState.currentPhase, 'Vehicles in vehicle_types:', vehicleTypes.length);
+  console.log('Phase:', gameState.currentPhase, 'Vehicles in learn_allowed:', config.LEARN_ALLOWED);
+
   //Learning Phase Queue
   const learnQueue = [];
 
+  // randomly choose ONE key to be the “high-obstacle” vehicle
+  const allowedLearnKeys = vehicleTypes
+    .filter(v => config.LEARN_ALLOWED.has(`${v.type}_${v.size}`))
+    .map(v => `${v.type}_${v.size}`);
+  highObstacleVehicleKey =
+    allowedLearnKeys[Math.floor(Math.random() * allowedLearnKeys.length)];
+    console.log(`High-obstacle vehicle for this participant: ${highObstacleVehicleKey}`);
+
+
   for (const v of vehicleTypes) {
     if (!config.LEARN_ALLOWED.has(`${v.type}_${v.size}`)) {
-      console.log('Skipping for learning phase', v.type, v.size);
+      //console.log('Skipping for learning phase', v.type, v.size);
       continue;
     } 
+
+  const key = `${v.type}_${v.size}`;
+  const total = config.LEARNING_TRIALS;
+  const obsCount = Math.round(obstacleProbabilityFor(key, false) * total);
+  const termCount = total - obsCount;
+
+  const flags = Array(obsCount).fill(true).concat(Array(termCount).fill(false));
+  shuffleArray(flags)
+    
     for (let i = 0; i < config.LEARNING_TRIALS; i++) {
     console.log('Using reps', config.LEARNING_TRIALS, 'for', v.type, v.size);
       learnQueue.push({
         type: v.type,
         size: v.size,
-        keys: {up: v.upKey, down: v.downKey, left: v.leftKey, right: v.rightKey}
+        keys: {up: v.upKey, down: v.downKey, left: v.leftKey, right: v.rightKey}, 
+        obstacleProb: flags[i] ? 1.0 : 0.0
         });
       }
+    console.log(`Built ${total} trials for ${key} — Obstacles: ${obsCount}, Terminators: ${termCount}`);
+
     }
+  
   gameState.vehicleTrialQueueLearn = learnQueue;
   console.log('vehicleTrialQueueLearn');
   console.log(gameState.vehicleTrialQueueLearn);
+
+  const learnSummary = {};
+  for (const trial of learnQueue) {
+    const k = `${trial.type}_${trial.size}`;
+    if (!(k in learnSummary)) learnSummary[k] = { obs: 0, term: 0 };
+    trial.obstacleProb === 1.0 ? learnSummary[k].obs++ : learnSummary[k].term++;
+  }
+  console.log("== Summary of obstacle distribution per vehicle (learning phase) ==");
+  console.table(learnSummary);
+
 
   gameState.LEARN_POOL = makeMazePool(gameState.vehicleTrialQueueLearn, 'maze-learn-v1', 'L');
   gameState.learnOrder = shuffleArray([...Array(gameState.LEARN_POOL.length).keys()]);
@@ -512,7 +562,7 @@ function generateVehicleQueue() {
   const planQueue = [];
   for (const v of vehicleTypes) {
     if (!config.PLAN_ALLOWED.has(`${v.type}_${v.size}`)) {
-      console.log('Skipping for planning phase', v.type, v.size);
+      //console.log('Skipping for planning phase', v.type, v.size);
       continue;
     } 
 
@@ -524,13 +574,33 @@ function generateVehicleQueue() {
       planQueue.push({
         type: v.type,
         size: v.size,
-        keys: {up: v.upKey, down: v.downKey, left: v.leftKey, right: v.rightKey}
+        keys: {up: v.upKey, down: v.downKey, left: v.leftKey, right: v.rightKey}, 
+        obstacleProb: 1.0
       });
     }
   }
+  //planQueue.forEach(t => (t.obstacleProb = 1.0));
+
   gameState.vehicleTrialQueuePlan = planQueue;
+  
   console.log('vehicleTrialQueuePlan');
   console.log(gameState.vehicleTrialQueuePlan);
+
+  const planSummary = {};
+  for (const trial of planQueue) {
+    const k = `${trial.type}_${trial.size}`;
+    if (!(k in planSummary)) planSummary[k] = { obs: 0, term: 0 };
+
+    if (trial.obstacleProb === 1.0) {
+      planSummary[k].obs++;
+    } else {
+      planSummary[k].term++;
+    }
+  }
+
+  console.log("== Summary of obstacle distribution per vehicle (planning phase) ==");
+  console.table(planSummary);
+
 
   gameState.PLAN_POOL = makeMazePool(gameState.vehicleTrialQueuePlan, 'maze-plan-v1', 'P');
   gameState.planOrder = shuffleArray([...Array(gameState.PLAN_POOL.length).keys()]);
@@ -624,7 +694,7 @@ function showTrialInstructions(page = 1) {
     container.appendChild(overlay);
     document.getElementById('start-trial-btn').addEventListener('click', () => {
       overlay.remove();
-      teleprompter.startTeleprompterSimulation()
+       teleprompter.startTeleprompterSimulation()
 
       //createGameUI();
       //practice.startPracticeTrial();

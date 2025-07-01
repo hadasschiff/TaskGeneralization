@@ -19,12 +19,12 @@ export const VEHICLE_TYPES = {
 
 // config.js
 export const PLANNING_REPS = {
-  car_small: 3,
-  car_big: 3,
-  car_medium: 6,
-  truck_medium: 3,
-  pickup_truck_medium: 3,
-
+  car_small: 3, //3
+  car_big: 3, //3
+  car_medium: 6, // 6
+  truck_medium: 3, //3
+  pickup_truck_medium: 3, //3
+  // new trcuk 6 reps
 };
 
 export const LEARN_ALLOWED = new Set(['truck_medium', 'pickup_truck_medium', 'car_small', 'car_big']);
