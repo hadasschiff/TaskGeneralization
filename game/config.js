@@ -11,10 +11,10 @@ export const VEHICLE_TYPES = {
   CAR_MEDIUM: { type: 'car', size: 'medium', upKey: 'e', downKey: 'c', leftKey: '-', rightKey: '-' },
   TRUCK_SMALL: { type: 'truck', size: 'small', upKey: 't', downKey: 'b', leftKey: 'y', rightKey: 'u' },
   TRUCK_BIG: { type: 'truck', size: 'big', upKey: 't', downKey: 'b', leftKey: 'n', rightKey: 'm' },
-  TRUCK_MEDIUM: { type: 'truck', size: 'medium', upKey: 't', downKey: 'b', leftKey: 'c', rightKey: 'v' },
+  TRUCK_MEDIUM: { type: 'truck', size: 'medium', upKey: 't', downKey: 'b', leftKey: 'n', rightKey: 'm' },
   PICKUP_TRUCK_BIG: { type: 'pickup_truck', size: 'big', upKey: '-', downKey: '-', leftKey: '-', rightKey: '-' },
   PICKUP_TRUCK_SMALL: { type: 'pickup_truck', size: 'small', upKey: '-', downKey: '-', leftKey: '-', rightKey: '-' },
-  PICKUP_TRUCK_MEDIUM: { type: 'pickup_truck', size: 'medium', upKey: 'r', downKey: 'v', leftKey: 't', rightKey: 'y' }, 
+  PICKUP_TRUCK_MEDIUM: { type: 'pickup_truck', size: 'medium', upKey: 't', downKey: 'b', leftKey: 'y', rightKey: 'u' }, 
   TOW_TRUCK_MEDIUM: {type: 'tow_truck', size: 'medium', upKey: '-', downKey: '-', leftKey: '-', rightKey: '-'}
 };
 
