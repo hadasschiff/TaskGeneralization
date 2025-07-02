@@ -1214,6 +1214,7 @@ function startPlanningPhase() {
   // Reset game data for phase 2
   gameState.gameData.phase2 = [];
   // Show instructions for first planning trial
+  convertToPlanningMode();
   showPlanningInstructions();
   };
 
@@ -1263,7 +1264,7 @@ function showPlanningInstructions() {
   startButton.addEventListener('click', function() {
       overlay.remove();
       // Convert grid to planning mode
-      //convertToPlanningMode();
+      // convertToPlanningMode();
       createPlanningTrial();
       document.querySelector('.move-box').focus();
 
