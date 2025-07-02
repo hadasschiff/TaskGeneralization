@@ -330,9 +330,9 @@ try {
   await setDoc(gameDataRef, sessionData);       // <-- await the network round-trip
   console.log(`saved game session: ${finalSessionId}`);
 
-  // *only* after Firestore says “OK” do we redirect
-  // window.location.href =
-  //   "https://app.prolific.com/submissions/complete?cc=C1C88DFD";
+  //*only* after Firestore says “OK” do we redirect
+  window.location.href =
+    "https://app.prolific.com/submissions/complete?cc=C1C88DFD";
 } catch (err) {
   console.error('Error saving game data:', err);
   alert("We couldn’t save your data automatically. " +
