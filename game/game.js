@@ -401,7 +401,7 @@ export function createGameUI() {
         <div class="score-group">
             <div class="score">Score: <span id="score">0</span></div>
             <div class="score">✅ Successes: <span id="success-count">0</span></div>
-            <div class="score">❌ Failures: <span id="failure-count">0</span></div>
+            <div class="score">🔥 Failures: <span id="failure-count">0</span></div>
         </div>
     </div>
     <div class="game-layout">
