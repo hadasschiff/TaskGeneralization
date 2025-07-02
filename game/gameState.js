@@ -28,10 +28,4 @@ export const gameState = {
   endtime: null,
   trialtime: null,
   gameStartTime: null,
-  
-
-
-
-
-
 }
