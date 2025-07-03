@@ -15,7 +15,9 @@ export const VEHICLE_TYPES = {
   PICKUP_TRUCK_BIG: { type: 'pickup_truck', size: 'big', upKey: '-', downKey: '-', leftKey: '-', rightKey: '-' },
   PICKUP_TRUCK_SMALL: { type: 'pickup_truck', size: 'small', upKey: '-', downKey: '-', leftKey: '-', rightKey: '-' },
   PICKUP_TRUCK_MEDIUM: { type: 'pickup_truck', size: 'medium', upKey: 't', downKey: 'b', leftKey: 'y', rightKey: 'u' }, 
-  TOW_TRUCK_MEDIUM: {type: 'tow_truck', size: 'medium', upKey: '-', downKey: '-', leftKey: '-', rightKey: '-'}
+  TOW_TRUCK_MEDIUM: {type: 'tow_truck', size: 'medium', upKey: '-', downKey: '-', leftKey: '-', rightKey: '-'},
+  DUMP_TRUCK_MEDIUM: {type: 'dump_truck', size: 'medium', upKey: '-', downKey: '-', leftKey: '-', rightKey: '-'}
+
 };
 
 // config.js
@@ -25,12 +27,12 @@ export const PLANNING_REPS = {
   car_medium: 6, // 6
   truck_medium: 3, //3
   pickup_truck_medium: 3, //3
-  tow_truck_medium: 6// 6
+  dump_truck_medium: 6// 6
 };
 
 export const LEARN_ALLOWED = new Set(['truck_medium', 'pickup_truck_medium', 'car_small', 'car_big']);
 
-export const PLAN_ALLOWED = new Set(['truck_medium', 'pickup_truck_medium', 'car_small', 'car_big', 'car_medium', 'tow_truck_medium']);
+export const PLAN_ALLOWED = new Set(['truck_medium', 'pickup_truck_medium', 'car_small', 'car_big', 'car_medium', 'dump_truck_medium']);
 
 // Color palettes for vehicle types
 export const COLOR_PALETTE = [

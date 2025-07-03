@@ -130,7 +130,7 @@ function showTeleprompterScroll() {
 
     // Scroll animation
     let start = null;
-    const duration = 20000; // 20 seconds scroll time
+    const duration = 25000; // 20 seconds scroll time
     //const distance = teleprompter.offsetHeight + text.offsetHeight;
     const distance = teleprompter.offsetHeight + text.offsetHeight + 50;
 
@@ -207,14 +207,18 @@ function startLiveChatSimulation() {
   const comments = [
     "A little louder maybe?",
     "Looks focused.",
-    "Great pace!",
-    "Eye contact is nice.",
-    "Clear and confident!",
+    //"Great pace!",
+    //"Eye contact is nice.",
+    //"Clear and confident!",
     "Could be more expressive.",
-    "Nice flow and energy!",
+    //"Nice flow and energy!",
     "Try to slow down a bit.",
-    "Looking composed!",
-    "Seems a little nervous."
+    //"Looking composed!",
+    "Seems a little nervous.",
+    "Could use a bit more energy.",
+    "Seems like they're rushing.",
+    "Feels like reading, not presenting.",
+    "A bit too fast to process.",
   ];
 
   let index = 0;
