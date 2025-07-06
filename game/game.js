@@ -7,6 +7,7 @@ import * as practice from './practiceTrial.js'
 import { db } from './firebaseconfig.js';
 import {collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
+
 function rInt(rng, n) { return Math.floor(rng() * n); }
 
 let highObstacleVehicleKey = null;
@@ -323,6 +324,7 @@ async function saveGameData() {
   studyId: studyId || null,
   sessionId: finalSessionId,
   startTime: Date.now(),
+  questionnaires : window.questionnaireResponses || null,
   gameData: normaliseGameData(gameState.gameData)
 };
  
@@ -1468,3 +1470,151 @@ function submitPlan(sequence, rawInputKeys) {
 
   endTrial();
 }
+// -----------------------------------------------------------------------------
+//  RL-ITI SLOT-MACHINE TASK  💰   (2025-07-02, auto-redirect version)
+//  – Vanilla jsPsych v7.3 + Firebase v9 modular SDK.
+// -----------------------------------------------------------------------------
+//  CHANGE-LOG (latest):
+//  • Added explicit outcome_x / true_prob_x variables + RT_ms.
+//  • Restored legacy outcomes array so feedback displays.
+//  • ITI-colour demos now advance on *any* key with message at top.
+//  • Practice starts automatically after a 2-s splash.
+//  • Final “Thank you” splash auto-closes after 3 s → Prolific redirect.
+// -----------------------------------------------------------------------------
+
+
+
+
+
+/* ════════════════════════════════════════════════════════════════════════
+ *  ADD-ON  •  Consent + Questionnaires  (works with ES-module workflow)   *
+ *  Exports:   startStudy()  – call this instead of initializeGame()      *
+ * ════════════════════════════════════════════════════════════════════════ */
+
+let consentDone = false;
+
+/* small util */
+const radioRow = (field, n) =>
+  Array.from({ length: n }, (_, i) =>
+    `<label class="opt">
+       <input type="radio" name="${field}" value="${i + 1}" required>
+       ${i + 1}
+     </label>`
+  ).join('');
+
+/* ---------- consent ---------- */
+function showConsent(thenRunGame) {
+  const box = document.querySelector('.game-container');
+  box.innerHTML = `
+    <form id="consentForm" class="overlay">
+      <h2>Research Consent Form</h2>
+      <div class="scroll">
+        <p>You are invited to participate in a study about decision-making
+           conducted by Drs. Marine Hainguerlot and Paul Sharp at Bar-Ilan University.</p>
+        <p>You will first complete a short questionnaire (~5 min) and may then
+           play an online game (~15 min). Average pay rate: <strong>$12 / h</strong>.
+           Bonus may depend on performance.</p>
+        <p>Participation is voluntary. You may withdraw at any time without
+           penalty. Responses are anonymous; data will be stored securely and
+           may be reused for future research or educational purposes.</p>
+        <p>Questions? E-mail
+           <a href="mailto:paul.sharp@biu.ac.il">paul.sharp@biu.ac.il</a></p>
+        <p><strong>If you are at least 18 years old, understand the above, and
+           agree to participate, click “I agree”.</strong></p>
+      </div>
+      <button id="agreeBtn">I agree ✅</button>
+    </form>`;
+
+  document.getElementById('agreeBtn').onclick = e => {
+    e.preventDefault();
+    box.innerHTML = '';
+    showQuestionnaires(thenRunGame);
+  };
+}
+
+/* ---------- questionnaires ---------- */
+function showQuestionnaires(thenRunGame) {
+  const box = document.querySelector('.game-container');
+  box.innerHTML = `
+    <form id="qsForm" class="overlay scroll">
+      <h2>Questionnaires</h2>
+
+      <h3>Part 1 – Worry<br>(1 = not at all typical … 5 = very typical)</h3>
+      <ol class="qs">
+        ${[
+          'My worries overwhelm me.',
+          'Many situations make me worry.',
+          'I know I should not worry about things, but I just cannot help it.',
+          'When I am under pressure I worry a lot.',
+          'I am always worrying about something.',
+          'As soon as I finish one task, I start to worry about everything else I have to do.',
+          'I have been a worrier all my life.',
+          'I notice that I have been worrying about things.'
+        ].map((t, i) =>
+          `<li>${t}<div>${radioRow('worry' + (i + 1), 5)}</div></li>`
+        ).join('')}
+      </ol>
+
+      <h3>Part 2 – Physical sensations<br>(1 = not at all … 5 = extremely)</h3>
+      <ol class="qs">
+        ${[
+          'Was short of breath',
+          'Felt dizzy or light-headed',
+          'Hands were cold or sweaty',
+          'Hands were shaky',
+          'Had trouble swallowing',
+          'Had hot or cold spells',
+          'Felt like I was choking',
+          'Muscles twitched or trembled',
+          'Was trembling or shaking',
+          'Had a very dry mouth'
+        ].map((t, i) =>
+          `<li>${i + 1}. ${t}<div>${radioRow('phys' + (i + 1), 5)}</div></li>`
+        ).join('')}
+      </ol>
+
+      <button id="qsSubmit">Submit ▶</button>
+    </form>`;
+
+  document.getElementById('qsForm').onsubmit = e => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.target).entries());
+    window.questionnaireResponses = data;        // grabbed later by saveGameData
+    consentDone = true;
+    box.innerHTML = '';
+    thenRunGame();                               // finally start original game
+  };
+}
+
+/* ---------- public launcher ---------- */
+export function startStudy(...args) {
+  if (consentDone) {
+    initializeGame(...args);                     // already did forms
+  } else {
+    showConsent(() => initializeGame(...args));
+  }
+}
+
+/* ---------- lightweight styles ---------- */
+const css = `
+  .overlay{
+    max-width:750px;margin:40px auto;padding:24px 32px;
+    font:18px/1.5 "Segoe UI",sans-serif;background:#fff;
+    border-radius:12px;box-shadow:0 4px 20px #0003;color:#222
+  }
+  .scroll{max-height:80vh;overflow-y:auto}
+  .qs li{margin-bottom:14px}
+  .opt{margin-right:6px;font-weight:600}
+  button{
+    margin-top:24px;padding:10px 20px;font-size:18px;border:none;border-radius:6px;
+    background:#1e3c72;color:#fff;cursor:pointer
+  }
+  button:hover{opacity:.9}
+`;
+const style = document.createElement('style');
+style.textContent = css;
+document.head.appendChild(style);
+
+/* ════════════════════════════════════════════════════════════════════════
+ *  END OF ADD-ON                                                          *
+ * ════════════════════════════════════════════════════════════════════════ */

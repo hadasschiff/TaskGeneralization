@@ -1,2 +1,5 @@
-import  {setupOpeningSlideHandlers} from './opening-slide.js'
-document.addEventListener('DOMContentLoaded',setupOpeningSlideHandlers());
+import { setupOpeningSlideHandlers } from "./opening-slide.js";
+
+document.addEventListener("DOMContentLoaded", () => {
+  setupOpeningSlideHandlers();          // will call startStudy() internally
+});
