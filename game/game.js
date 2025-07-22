@@ -1,21 +1,56 @@
-//game.js
+// =============================================================
+//  game.js  — REWRITTEN to implement requested changes (🔥 & ⬛)
+//  2025‑07‑06
+// =============================================================
+//  Summary of major edits — DO NOT DELETE THIS HEADER
+//  • NEW constant BLOCK_SYMBOL = "⬛" (black square obstacle).
+//  • Former “terminator” tiles now behave as impassable obstacles.
+//    – Vehicle cannot enter them; movement is cancelled.
+//    – Grid renders them as ⬛ instead of ✖.
+//    – Trial does NOT end on contact (contact is impossible).
+//  • Instructions updated: references to ✖ replaced by ⬛; added
+//    the line: "If you hit the 🔥 you will speak longer!" wherever
+//    fire‑obstacles are mentioned.
+//  • Movement + collision logic updated to prevent entry into ⬛.
+// =============================================================
+
 import * as config from './config.js';
-import * as teleprompter from './teleprompter.js'
+import * as teleprompter from './teleprompter.js';
 import { gameState } from './gameState.js';
 import * as vehicles from './vehicle.js';
-import * as practice from './practiceTrial.js'
+import { makeSedanAppearance } from './vehicle.js';
+import * as practice from './practiceTrial.js';
 import { db } from './firebaseconfig.js';
-import {collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+import { collection, doc, setDoc } from 'https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js';
 
+// ──────────────────────────────────────────────────────────────
+//  NEW CONSTANTS & HELPERS
+// ──────────────────────────────────────────────────────────────
+const MEMORY_TRIALS = config.MEMORY_TRIALS ?? 3;
+
+const FIRE_WARNING_HTML =
+  '<div id="fire-warning" style="display:none;margin-top:10px;' +
+  'font-size:20px;font-weight:bold;color:#B00;text-align:center;">' +
+  'More public speaking if you hit the 🔥' +
+  '</div>';
+
+/** Unicode black square used for the new impassable obstacle                      */
+const BLOCK_SYMBOL = '⬛';
+
+/** Convenience: returns true if the tile blocks movement                         */
+function isBlockTile(tile) {
+  return tile === 'terminator'; // we keep the internal tag but semantics changed
+}
 
 function rInt(rng, n) { return Math.floor(rng() * n); }
 
 let highObstacleVehicleKey = null;
 function obstacleProbabilityFor(key, inPlanningPhase = false) {
   if (inPlanningPhase) return 1.0;                   // 100 %
-  if (key === highObstacleVehicleKey) return 0.8;    // 80 %
-  return 0.2;                                        // 20 %
+  if (key === highObstacleVehicleKey) return 0.9;    // 90 %
+  return 0.1;                                        // 10 %
 }
+
 
 const vehicleColorQueuesLearn = {};
 const vehicleColorQueuesPlan = {};
@@ -34,6 +69,9 @@ Object.values(config.VEHICLE_TYPES).forEach(vehicle => {
 
   vehicleColorQueuesPlan[key] = shuffleArray([...config.COLOR_PALETTE_PLAN]);
 });
+let sedanIndex = 0;
+// ─── Phase flag used by createTrial() / createPlanningTrial() ──
+let currentPhase = 'learn';  // may be 'learn' or 'plan'
 
 // Print queues
 // console.log("=== COLOR QUEUES: LEARNING PHASE ===");
@@ -51,111 +89,89 @@ Object.values(config.VEHICLE_TYPES).forEach(vehicle => {
 //   car_small: shuffleArray(config.COLOR_PALETTE),
 //   car_big: shuffleArray(config.COLOR_PALETTE),
 //   car_medium: shuffleArray(config.COLOR_PALETTE),
-//   truck_small: shuffleArray(config.COLOR_PALETTE),
-//   truck_big: shuffleArray(config.COLOR_PALETTE),
-//   truck_medium: shuffleArray(config.COLOR_PALETTE),
-//   pickup_truck_small:shuffleArray(config.COLOR_PALETTE),
-//   pickup_truck_big: shuffleArray(config.COLOR_PALETTE),
-//   pickup_truck_medium: shuffleArray(config.COLOR_PALETTE),
+//   sedan_small: shuffleArray(config.COLOR_PALETTE),
+//   sedan_big: shuffleArray(config.COLOR_PALETTE),
+//   sedan_medium: shuffleArray(config.COLOR_PALETTE),
+//   pickup_sedan_small:shuffleArray(config.COLOR_PALETTE),
+//   pickup_sedan_big: shuffleArray(config.COLOR_PALETTE),
+//   pickup_sedan_medium: shuffleArray(config.COLOR_PALETTE),
 // };
 
-//maze generator
+// ──────────────────────────────────────────────────────────────
+//  MAZE GENERATOR  – "terminator" → static BLOCK (⬛)
+// ──────────────────────────────────────────────────────────────
+
 function buildMaze(rng, vehicleType) {
-  const g = Array.from({length: config.GRID_SIZE}, _=>Array(config.GRID_SIZE).fill('empty'));
+  const g = Array.from({ length: config.GRID_SIZE }, _ => Array(config.GRID_SIZE).fill('empty'));
   const start = { x: rInt(rng, config.GRID_SIZE), y: rInt(rng, config.GRID_SIZE) };
 
-  const dirs = [{dx:0,dy:-1, name:'up'},{dx:0,dy:1, name:'down'},{dx:-1,dy:0, name:'left'},{dx:1,dy:0, name:'right'}];
+  const dirs = [
+    { dx: 0, dy: -1, name: 'up' },
+    { dx: 0, dy: 1,  name: 'down' },
+    { dx: -1, dy: 0, name: 'left' },
+    { dx: 1, dy: 0,  name: 'right' }
+  ];
+
   let queue = [{ path: [start], visited: new Set([`${start.x},${start.y}`]) }];
   let validPath = null;
 
-  while (queue.length > 0) {
+  while (queue.length) {
     const { path, visited } = queue.shift();
     const last = path[path.length - 1];
+    if (path.length === 5) { validPath = path; break; }
 
-    if (path.length === 5) {
-      validPath = path;
-      break;
-    }
-
-    // shuffle directions to randomize path shape
     const shuffledDirs = dirs.slice().sort(() => rng() - 0.5);
-
     for (const d of shuffledDirs) {
       const nx = last.x + d.dx;
       const ny = last.y + d.dy;
       const key = `${nx},${ny}`;
-
-      if (
-        nx >= 0 && nx < config.GRID_SIZE &&
-        ny >= 0 && ny < config.GRID_SIZE &&
-        !visited.has(key)
-      ) {
-        const newPath = [...path, { x: nx, y: ny }];
-        const newVisited = new Set(visited);
-        newVisited.add(key);
-        queue.push({ path: newPath, visited: newVisited });
+      if (nx >= 0 && nx < config.GRID_SIZE && ny >= 0 && ny < config.GRID_SIZE && !visited.has(key)) {
+        queue.push({ path: [...path, { x: nx, y: ny }], visited: new Set(visited).add(key) });
       }
     }
   }
 
-  if (!validPath) {
-    throw new Error('BFS failed to find a valid path');
-  }
+  if (!validPath) throw new Error('BFS failed to find a valid path');
 
   const rewards = validPath.slice(1);
-  rewards.forEach(p=>g[p.y][p.x]='reward');
-  
+  rewards.forEach(p => (g[p.y][p.x] = 'reward'));
+
   const optimalDirections = [];
   for (let i = 1; i < validPath.length; i++) {
     const dx = validPath[i].x - validPath[i - 1].x;
     const dy = validPath[i].y - validPath[i - 1].y;
-
-    if (dx === 1) optimalDirections.push('right');
+    if (dx === 1)      optimalDirections.push('right');
     else if (dx === -1) optimalDirections.push('left');
-    else if (dy === 1) optimalDirections.push('down');
+    else if (dy === 1)  optimalDirections.push('down');
     else if (dy === -1) optimalDirections.push('up');
   }
 
-  // add terminator or obstacles depending on vehicle type
-  let terminator = null;
-  let obstacles = [];
+  let terminator = null;   // we keep the name, semantics changed (now BLOCK)
+  let obstacles  = [];
 
-
-  // Decide from per-trial probability
   const placeObstacles = rng() < (vehicleType.obstacleProb ?? 0);
-  //const isCar = vehicleType.type.startsWith('car');
-  //const isTruck = vehicleType.type.startsWith('truck') || vehicleType.type.startsWith('pickup_truck');
 
   if (placeObstacles) {
+    // two FIRE obstacles (🔥) that penalise on hit
     let placed = 0;
     while (placed < 2) {
       const ox = rInt(rng, config.GRID_SIZE);
       const oy = rInt(rng, config.GRID_SIZE);
-      if (g[oy][ox] !== 'empty') continue;
-      if (ox === start.x && oy === start.y) continue;
-
-      g[oy][ox] = 'obstacle';
-      obstacles.push({ x: ox, y: oy }); 
-      placed++;
+      if (g[oy][ox] !== 'empty' || (ox === start.x && oy === start.y)) continue;
+      g[oy][ox] = 'obstacle'; obstacles.push({ x: ox, y: oy }); placed++;
     }
-
   } else {
-    //single terminator
+    // single IMPASSABLE BLOCK (⬛)
     let placed = false;
     while (!placed) {
       const tx = rInt(rng, config.GRID_SIZE);
       const ty = rInt(rng, config.GRID_SIZE);
-      if (g[ty][tx] !== 'empty') continue;
-      if (tx === start.x && ty === start.y) continue;
-
-      g[ty][tx] = 'terminator';
-      terminator = { x: tx, y: ty }; 
+      if (g[ty][tx] !== 'empty' || (tx === start.x && ty === start.y)) continue;
+      g[ty][tx] = 'terminator'; // repurposed as block
+      terminator = { x: tx, y: ty };
       placed = true;
     }
   }
-
-  //console.log(`Building maze for vehicle: ${vehicleType.type}_${vehicleType.size}`);
-  //console.log(`Obstacle probability for this trial: ${vehicleType.obstacleProb ?? 'not set'}`);
 
   return { grid: g, start, rewards, optimalDirections, terminator, obstacles, vehicleType };
 }
@@ -211,6 +227,7 @@ function loadMazeFrom(pool, idx){
   console.log(`Optimal route for ${m.id}: ${m.optimalDirections.join(', ')}`);
   gameState.optimalDirections = m.optimalDirections;
   console.log("starting position:", gameState.startPosition);
+  updateFireWarning();
   renderGrid();
 }
 
@@ -221,6 +238,13 @@ function shuffleArray(arr) {
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
   return copy;
+}
+
+function updateFireWarning(){
+  const el=document.getElementById('fire-warning');
+  if(!el) return;
+  const hasFire = gameState.obstacles && gameState.obstacles.length>0;
+  el.style.display = hasFire ? 'block' : 'none';
 }
 
 
@@ -431,9 +455,9 @@ export function createGameUI() {
               <div id="game-grid"></div>
           </div>
       </div>
+      ${FIRE_WARNING_HTML}          <!-- warning directly under the maze --
       <div id="vehicle-display" class="vehicle-display"></div>
   </div>
-  </div> 
 `;
 }
 
@@ -501,65 +525,70 @@ export function startLearningPhase() {
 
 function generateVehicleQueue() {
   const vehicleTypes = Object.values(config.VEHICLE_TYPES);
-  console.log('Phase:', gameState.currentPhase, 'Vehicles in vehicle_types:', vehicleTypes.length);
-  console.log('Phase:', gameState.currentPhase, 'Vehicles in learn_allowed:', config.LEARN_ALLOWED);
 
-  //Learning Phase Queue
+  // ─── Learning Phase ──────────────────────────────────────
   const learnQueue = [];
-
-  // randomly choose ONE key to be the “high-obstacle” vehicle
   const allowedLearnKeys = vehicleTypes
     .filter(v => config.LEARN_ALLOWED.has(`${v.type}_${v.size}`))
     .map(v => `${v.type}_${v.size}`);
-  highObstacleVehicleKey =
-    allowedLearnKeys[Math.floor(Math.random() * allowedLearnKeys.length)];
-    console.log(`High-obstacle vehicle for this participant: ${highObstacleVehicleKey}`);
 
+  highObstacleVehicleKey = allowedLearnKeys[Math.floor(Math.random()*allowedLearnKeys.length)];
+  console.log(`High‑obstacle vehicle for this participant: ${highObstacleVehicleKey}`);
 
   for (const v of vehicleTypes) {
-    if (!config.LEARN_ALLOWED.has(`${v.type}_${v.size}`)) {
-      //console.log('Skipping for learning phase', v.type, v.size);
-      continue;
-    } 
+    if (!config.LEARN_ALLOWED.has(`${v.type}_${v.size}`)) continue;
 
-  const key = `${v.type}_${v.size}`;
-  const total = config.LEARNING_TRIALS;
-  const obsCount = Math.round(obstacleProbabilityFor(key, false) * total);
-  const termCount = total - obsCount;
+    const key   = `${v.type}_${v.size}`;
+    const total = config.LEARNING_TRIALS;
 
-  const flags = Array(obsCount).fill(true).concat(Array(termCount).fill(false));
-  shuffleArray(flags)
-    
-    for (let i = 0; i < config.LEARNING_TRIALS; i++) {
-    console.log('Using reps', config.LEARNING_TRIALS, 'for', v.type, v.size);
+    // obstacle vs block split for the 15 *visible‑key* trials
+    const obsCount  = Math.round(obstacleProbabilityFor(key,false) * total);
+    const termCount = total - obsCount;
+    const flags     = Array(obsCount).fill(true).concat(Array(termCount).fill(false));
+    shuffleArray(flags);
+
+    // ► (A) 15 normal trials
+    for (let i=0;i<total;i++) {
       learnQueue.push({
         type: v.type,
         size: v.size,
-        keys: {up: v.upKey, down: v.downKey, left: v.leftKey, right: v.rightKey}, 
-        obstacleProb: flags[i] ? 1.0 : 0.0
-        });
-      }
-    console.log(`Built ${total} trials for ${key} — Obstacles: ${obsCount}, Terminators: ${termCount}`);
-
+        keys: { up:v.upKey,down:v.downKey,left:v.leftKey,right:v.rightKey },
+        obstacleProb: flags[i] ? 1.0 : 0.0,
+        memory: false
+      });
     }
-  
-  gameState.vehicleTrialQueueLearn = learnQueue;
-  console.log('vehicleTrialQueueLearn');
-  console.log(gameState.vehicleTrialQueueLearn);
 
-  const learnSummary = {};
-  for (const trial of learnQueue) {
-    const k = `${trial.type}_${trial.size}`;
-    if (!(k in learnSummary)) learnSummary[k] = { obs: 0, term: 0 };
-    trial.obstacleProb === 1.0 ? learnSummary[k].obs++ : learnSummary[k].term++;
+    // ► (B) 3 memory trials — no keys shown, still 0.1 / 0.9 obstacle rule
+    const memObsProb = obstacleProbabilityFor(key,false);
+    for (let i=0;i<MEMORY_TRIALS;i++) {
+      learnQueue.push({
+        type: v.type,
+        size: v.size,
+        keys: { up:v.upKey,down:v.downKey,left:v.leftKey,right:v.rightKey },
+        obstacleProb: Math.random() < memObsProb ? 1.0 : 0.0,
+        memory: true
+      });
+    }
+
+    console.log(`Built ${total+MEMORY_TRIALS} learning trials for ${key}`);
   }
-  console.log("== Summary of obstacle distribution per vehicle (learning phase) ==");
+
+  gameState.vehicleTrialQueueLearn = learnQueue;
+
+  // Obstacle summary table (ignores memory flag – still informative)
+  const learnSummary = {};
+  for (const t of learnQueue) {
+    const k = `${t.type}_${t.size}`;
+    if (!(k in learnSummary)) learnSummary[k] = { obs:0, term:0 };
+    t.obstacleProb===1.0 ? learnSummary[k].obs++ : learnSummary[k].term++;
+  }
+  console.log('== Learning‑phase obstacle distribution (incl. memory trials) ==');
   console.table(learnSummary);
 
-
-  gameState.LEARN_POOL = makeMazePool(gameState.vehicleTrialQueueLearn, 'maze-learn-v1', 'L');
+  // build maze pool & order
+  gameState.LEARN_POOL = makeMazePool(learnQueue,'maze-learn-v2','L');
   gameState.learnOrder = shuffleArray([...Array(gameState.LEARN_POOL.length).keys()]);
-
+  
   //Planning Phase Queue
   const planQueue = [];
   for (const v of vehicleTypes) {
@@ -613,6 +642,10 @@ function generateVehicleQueue() {
   console.log("Plan order:", gameState.planOrder);
 }
 
+// ──────────────────────────────────────────────────────────────
+//  INSTRUCTIONS – updated text & FIRE warning line
+// ──────────────────────────────────────────────────────────────
+
 function showTrialInstructions(page = 1) {
   const container = document.querySelector('.game-container');
   container.innerHTML = '';
@@ -621,212 +654,170 @@ function showTrialInstructions(page = 1) {
 
   if (page === 1) {
     overlay.innerHTML = `
-      <div class="message-box" style="font-family: 'Segoe UI', sans-serif; background: #fff; color: #222; border-radius: 12px; margin: auto; padding: 36px 40px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12); text-align: left;">
-        <h2 style="font-size: 2rem; color: #1e3c72; margin-bottom: 20px;">Instructions</h2>
-        <p style="font-size: 1.2rem; margin: 12px 0; line-height: 1.6; text-align: left;">
-            In this task, you will navigate a vehicle through different mazes. In each trial you will be instructed how to move the vehicle across the maze.</p>
-        <p style="font-size: 1.1rem; margin: 12px 0; text-align: left;">
-        Your goal is to collect as many <strong style="color: green;">rewards (💰)</strong> as possible while avoiding <strong style="color: red;">obstacles (🔥)</strong>.</p>
-        
-        <div style="background: #f5f5f5; border-radius: 10px; padding: 20px 24px; margin: 24px 0; text-align: left;">
-          <p style="margin-bottom: 12px; font-size: 1.2rem; line-height: 1.6; text-align: left;">
-          A few trials will be <strong style="color: #1e3c72;">randomly selected</strong>. These trials will determine:</p>
-          
-          <ul style="list-style: none; padding-left: 0; margin: 0;">
-            <li style="margin-bottom: 10px; font-size: 1.1rem;">
-
-            <strong>Your bonus payment</strong> — based on the number of <span style="color: green;">rewards (💰)</span> you collect.</li>
-            <li style="margin-bottom: 10px; font-size: 1.1rem;">
-
-            <strong>Your time in a public speaking task</strong> — based on the number of <span style="color: red;">obstacles (🔥)</span> you hit. You’ll read from a teleprompter while a live audience gives feedback in a chat. They will rate your performance and confidence.</li>
+      <div class="message-box" style="font-family:'Segoe UI',sans-serif;background:#fff;color:#222;border-radius:12px;margin:auto;padding:36px 40px;box-shadow:0 8px 20px rgba(0,0,0,0.12);text-align:left;">
+        <h2 style="font-size:2rem;color:#1e3c72;margin-bottom:20px;">Instructions</h2>
+        <p style="font-size:1.2rem;margin:12px 0;line-height:1.6;">In this task, you will navigate a vehicle through mazes.</p>
+        <p style="font-size:1.1rem;margin:12px 0;">Collect <strong style="color:green;">rewards (💰)</strong> that translates into more money, while avoiding <strong style="color:red;">obstacles (🔥)</strong>. <br><em>If you hit the 🔥 you will speak longer in a PUBLIC SPEAKING TASK after the game!!</em></p>
+        <p style="font-size:1.1rem;margin:12px 0;">You will also see <strong>${BLOCK_SYMBOL}</strong> squares. These are walls you cannot enter — plan your route around them.</p>
+        <div style="background:#f5f5f5;border-radius:10px;padding:20px 24px;margin:24px 0;">
+          <p style="margin-bottom:12px;font-size:1.2rem;">A few trials will be <strong style="color:#1e3c72;">randomly selected</strong> to determine:</p>
+          <ul style="list-style:none;padding-left:0;margin:0;font-size:1.1rem;">
+            <li style="margin-bottom:10px;"><strong>Your bonus money</strong> — based on collected 💰.</li>
+            <li><strong>Your PUBLIC SPEAKING TIME</strong> — longer for each 🔥 hit.</li>
           </ul>
         </div>
-
-        <p style="font-size: 1.1rem; margin: 12px 0; text-align: left;">
-        <strong>Some trials will have no obstacles.</strong> In those trials, you'll see a <strong style="color: black;">✖</strong>. Reaching it will end the trial with <strong style="color: green;">no penalty</strong>.</p>
-
-        <p style="font-size: 1.1rem; margin: 12px 0; text-align: left;">
-
-        Try your best on each trial — you won’t know which ones will determine your outcomes!</p>
-        <div style="text-align: center; margin-top: 24px;">
-          <button id="next-instructions-btn" style="background-color: #1e3c72; color: white; padding: 12px 28px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.2s ease;">
-            Next
-          </button>
-        </div>
-      </div>
-    `;
-
+        <div style="text-align:center;margin-top:24px;"><button id="next-instructions-btn" style="background:#1e3c72;color:#fff;padding:12px 28px;font-size:18px;border:none;border-radius:8px;cursor:pointer;">Next</button></div>
+      </div>`;
     container.appendChild(overlay);
-    document.getElementById('next-instructions-btn').addEventListener('click', () => {
-      showTrialInstructions(2);
-    });
-
-  } else if (page === 2) {
-    overlay.innerHTML = `
-      <div class="message-box" style="font-family: 'Segoe UI', sans-serif; background: #fff; color: #222; border-radius: 12px; margin: auto; padding: 36px 40px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12); text-align: left;">
-        <h2 style="font-size: 2rem; color: #1e3c72; margin-bottom: 20px; text-align: left;">Reminder</h2>
-
-        <p style="font-size: 1.2rem; margin: 12px 0; line-height: 1.6 ; text-align: left;">
-          <strong>Some vehicles will NOT tell you how to navigate around the maze,</strong> So you can prepare to use these vechicles by learning to navigate the vehicles you see in the learning phase. 
-        </p>
-
-        <p style="font-size: 1.1rem; margin: 12px 0; text-align: left;">
-          Remember, a few trials will be <strong style="color: #1e3c72;">randomly selected</strong> for your bonus and a public speaking task.
-        </p>
-
-        <p style="font-size: 1.1rem; margin: 12px 0; text-align: left;">
-          The more <span style="color: red;">obstacles (🔥)</span> you hit in those trials, the <strong>longer</strong> you'll have to speak in front of a live audience, with <strong>your face and voice visible</strong>. They will rate your performance and confidence in real time.
-        </p>
-
-        <p style="font-size: 1.1rem; margin: 12px 0; text-align: left;">
-          Make careful choices — your actions will matter!
-        </p>
-
-        <p style="font-size: 1.1rem; margin: 12px 0; text-align: left;"><strong>Good luck!</strong></p>
-
-        <div style="text-align: center; margin-top: 24px;">
-          <button id="start-trial-btn" style="background-color: #1e3c72; color: white; padding: 12px 28px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.2s ease;">
-            Start
-          </button>
-        </div>
-      </div>
-
-    `;
-
-    container.appendChild(overlay);
-    document.getElementById('start-trial-btn').addEventListener('click', () => {
-      overlay.remove();
-       teleprompter.startTeleprompterSimulation()
-
-      //createGameUI();
-      //practice.startPracticeTrial();
-
-      // gameState.currentPhase = 1;
-      // createGameUI();
-      // startLearningPhase();
-      // createTrial(); 
-
-    });
+    document.getElementById('next-instructions-btn').onclick = () => showTrialInstructions(2);
+    return;
   }
+
+  // page 2 (was reminder)
+  overlay.innerHTML = `
+      <div class="message-box" style="font-family:'Segoe UI',sans-serif;background:#fff;color:#222;border-radius:12px;margin:auto;padding:36px 40px;box-shadow:0 8px 20px rgba(0,0,0,0.12);text-align:left;">
+        <h2 style="font-size:2rem;color:#1e3c72;margin-bottom:20px;">Reminder</h2>
+        <p style="font-size:1.2rem;margin:12px 0;line-height:1.6;">Pay attention to which keys navigate the vehicles - you must use them in a planning phase where <strong>you will need to remember how to navigate!</strong></p>
+        <p style="font-size:1.1rem;margin:12px 0;">Again, if you hit <strong style="color:red;">🔥</strong> you will speak longer! Avoid the <strong>${BLOCK_SYMBOL}</strong> walls; you can’t stand on them.</p>
+        <p style="font-size:1.1rem;margin:12px 0;">Good luck!</p>
+        <div style="text-align:center;margin-top:24px;"><button id="start-trial-btn" style="background:#1e3c72;color:#fff;padding:12px 28px;font-size:18px;border:none;border-radius:8px;cursor:pointer;">Start</button></div>
+      </div>`;
+  container.appendChild(overlay);
+  document.getElementById('start-trial-btn').onclick = () => {
+    overlay.remove();
+    teleprompter.startTeleprompterSimulation();
+  };
 }
+
 
 export function createTrial() {
   gameState.inputEnabled = true;
-  // Reset score for the new trial
   if (gameState.currentPhase === 1) {
     gameState.score = 0;
     document.getElementById('score').textContent = gameState.score;
     document.getElementById('success-count').textContent = 0;
     document.getElementById('failure-count').textContent = 0;
   }
-  const maze = gameState.LEARN_POOL[gameState.learnOrder[gameState.currentTrial- 1]];
+
+  const maze = gameState.LEARN_POOL[gameState.learnOrder[gameState.currentTrial - 1]];
   const vehicleData = maze.vehicleType;
+  if (!maze || !vehicleData) { console.error('Missing vehicle data'); return; }
 
-  if (!maze || !maze.vehicleType) {
-    console.error('Missing vehicle data in maze:', maze);
-    return;
+  // Detect sedan (your sedans use type === 'sedan')
+  const vehIsSedan = vehicleData.type === 'sedan';
+
+  if (vehIsSedan) {
+    // NEW: canonical colour + pattern tile
+    const { color, patternUrl } = makeSedanAppearance('learn', sedanIndex++);
+    gameState.currentVehicle = {
+      ...vehicleData,
+      color,
+      patternUrl,
+      x: maze.start.x,
+      y: maze.start.y
+    };
+  } else {
+    // Existing colour rotation for non‑sedans
+    const key   = `${vehicleData.type}_${vehicleData.size}`;
+    let queue   = vehicleColorQueuesLearn[key];
+    if (!queue || queue.length === 0) {
+      vehicleColorQueuesLearn[key] = shuffleArray([...config.COLOR_PALETTE_LEARN]);
+      queue = vehicleColorQueuesLearn[key];
+    }
+    const color = queue.shift();
+    gameState.currentVehicle = {
+      ...vehicleData,
+      color,
+      x: maze.start.x,
+      y: maze.start.y
+    };
   }
 
-  gameState.currentVehicle.type = vehicleData.type;
-  gameState.currentVehicle.size = vehicleData.size;
-  gameState.currentVehicle.keys = vehicleData.keys;
-  console.log(`Learning Phase - Vehicle: ${gameState.currentVehicle.type}, Size: ${gameState.currentVehicle.size}`);
-
-  // Select color
-  const key = `${gameState.currentVehicle.type}_${gameState.currentVehicle.size}`;
-  let queue;
-  queue = vehicleColorQueuesLearn[key];
-
-  // const queue = vehicleColorQueues[key];
-  const colorIndex = Math.floor((gameState.currentTrial- 1) / 4) % 20;
-  // Get a color and assign to vehicle
-  gameState.currentVehicle.color = queue.shift();
-  console.log("Assigned color:", gameState.currentVehicle.color);
-
-
-  // if the queue runs out (all 5 colors used), re-shuffle
-  if (queue.length === 0) {
-    //vehicleColorQueues[key] = shuffleArray(config.COLOR_PALETTE);
-    //vehicleColorQueuesLearn[key] = shuffleArray([config.COLOR_PALETTE_LEARN]);
-    vehicleColorQueuesLearn[key] = shuffleArray([...config.COLOR_PALETTE_LEARN]);
-  }
-
-  // Reset maze
-  loadMazeFrom(gameState.LEARN_POOL, gameState.learnOrder[gameState.currentTrial- 1]);
-
-  // Update vehicle info display
+  // Reset maze & UI
+  loadMazeFrom(gameState.LEARN_POOL, gameState.learnOrder[gameState.currentTrial - 1]);
   updateVehicleInfo();
   vehicles.renderVehiclePreview();
-  // Start trial timer and record data
   startTrialTimer();
 }
 
 function vehicleAllowsObstacles(vehicle) {
-  return (vehicle.type.startsWith('truck') || vehicle.type === 'pickup_truck');}
+  return (vehicle.type.startsWith('sedan') || vehicle.type === 'pickup_sedan');}
+
+// ──────────────────────────────────────────────────────────────
+//  RENDER GRID  (terminator → ⬛)
+// ──────────────────────────────────────────────────────────────
 
 export function renderGrid() {
   const gridEl = document.getElementById('game-grid');
-  // Clear existing grid
+  if (!gridEl) return;
   gridEl.innerHTML = '';
-  
-  // Create cells
-  for (let y = 0; y < config.GRID_SIZE; y++) {
-      for (let x = 0; x < config.GRID_SIZE; x++) {
-          const cellEl = document.createElement('div');
-          cellEl.className = 'grid-cell';
-          cellEl.dataset.x = x;
-          cellEl.dataset.y = y;
-          
-          // Add cell type class
-          if (gameState.gridWorld[y][x] === 'obstacle') {
-              cellEl.classList.add('obstacle');
-              cellEl.innerHTML = '🔥'; 
-          } else if (gameState.gridWorld[y][x] === 'reward') {
-              cellEl.classList.add('reward');
-              cellEl.innerHTML = '💰';
-          } else if (gameState.gridWorld[y][x] === 'terminator') {
-              cellEl.classList.add('terminator');
-              cellEl.innerHTML = '✖';
-              // cellEl.innerHTML = '✖️'; 
-              // cellEl.style.color = '#000';
-          }
-          
-          // Add vehicle if this is vehicle position
-          if (x === gameState.currentVehicle.x && y === gameState.currentVehicle.y) {
-              const vehicle = document.createElement('div');
-              vehicle.className = 'vehicle-image';
-              vehicles.loadColoredSvg(`/vehicles/${gameState.currentVehicle.type}.svg`, gameState.currentVehicle.color)
-                .then(coloredUrl => {
-                  vehicle.style.backgroundImage = `url(${coloredUrl})`;
-                });
-              vehicle.style.backgroundSize = 'contain';
-              vehicle.style.backgroundRepeat = 'no-repeat';
-              vehicle.style.backgroundPosition = 'center';
-              vehicle.style.filter = `drop-shadow(0 0 0 ${gameState.currentVehicle.color}) saturate(200%) brightness(80%)`;
-              vehicle.style.position = 'absolute';
-              vehicle.style.top = 0
-              vehicle.style.right = 0
-              vehicle.style.top = '50%';
-              vehicle.style.left = '50%';
-              vehicle.style.transform = 'translate(-50%, -50%)';
 
-            // Set size depending on small or big
-            if (gameState.currentVehicle.size === 'small') {
-                vehicle.style.width = '50%';
-                vehicle.style.height = '50%';
-            } else if (gameState.currentVehicle.size === 'medium') {
-                vehicle.style.width = '75%';
-                vehicle.style.height = '75%';
-            } else {
-                vehicle.style.width = '100%';
-                vehicle.style.height = '100%';
-            }
-              cellEl.appendChild(vehicle);
+  for (let y = 0; y < config.GRID_SIZE; y++) {
+    for (let x = 0; x < config.GRID_SIZE; x++) {
+      const cellEl = document.createElement('div');
+      cellEl.className = 'grid-cell';
+
+      const tile = gameState.gridWorld[y][x];
+      if (tile === 'obstacle')      { cellEl.classList.add('obstacle');  cellEl.innerHTML = '🔥'; }
+      else if (tile === 'reward')   { cellEl.classList.add('reward');    cellEl.innerHTML = '💰'; }
+      else if (tile === 'terminator'){ cellEl.classList.add('block');    cellEl.innerHTML = BLOCK_SYMBOL; }
+
+      /* ▶ only add the sprite on its true square ◀ */
+      if (x === gameState.currentVehicle.x && y === gameState.currentVehicle.y) {
+        const v = document.createElement('div');
+        v.className = 'vehicle-image';
+
+        vehicles.loadColoredSvg(
+          `/vehicles/${gameState.currentVehicle.type}.svg`,
+          gameState.currentVehicle.color
+        ).then(colouredUrl => {
+
+          if (gameState.currentVehicle.patternUrl) {
+            v.style.backgroundColor   = gameState.currentVehicle.color;
+            v.style.backgroundImage   = `url(${gameState.currentVehicle.patternUrl})`;
+            v.style.backgroundRepeat  = 'repeat';
+            v.style.backgroundSize    = '14px';
+            v.style.maskImage         = `url(${colouredUrl})`;
+            v.style.webkitMaskImage   = `url(${colouredUrl})`;
+            v.style.maskRepeat        = 'no-repeat';
+            v.style.maskSize          = 'contain';
+            v.style.maskPosition      = 'center';
+          } else {
+            v.style.backgroundImage   = `url(${colouredUrl})`;
+            v.style.backgroundRepeat  = 'no-repeat';
+            v.style.backgroundSize    = 'contain';
+            v.style.backgroundPosition= 'center';
           }
-          gridEl.appendChild(cellEl);
-      }
-  }
+          
+        });
+
+        // ▼ keep this sizing block exactly as in your old code
+        if (gameState.currentVehicle.size === 'small') {
+          v.style.width  = '50%';
+          v.style.height = '50%';
+        } else if (gameState.currentVehicle.size === 'medium') {
+          v.style.width  = '75%';
+          v.style.height = '75%';
+        } else {                         // big
+          v.style.width  = '100%';
+          v.style.height = '100%';
         }
+
+        v.style.position  = 'absolute';
+        v.style.top       = '50%';
+        v.style.left      = '50%';
+        v.style.transform = 'translate(-50%, -50%)';
+        v.style.filter    = `drop-shadow(0 0 0 ${gameState.currentVehicle.color}) saturate(200%) brightness(80%)`;
+
+        cellEl.appendChild(v);
+      }
+
+      gridEl.appendChild(cellEl);   // ← the line that was missing
+    }
+  }
+}
+
+
 
 function showWrongKeyAlert() {
   const wrongKeyAlert = document.getElementById('wrong-key-alert');
@@ -991,111 +982,80 @@ function startTrialTimer() {
   }
 }
 
+// ──────────────────────────────────────────────────────────────
+//  MOVE VEHICLE  – block entry into ⬛
+// ──────────────────────────────────────────────────────────────
+
 function moveVehicle(direction) {
-  // Store old position
-  const oldPosition = { x: gameState.currentVehicle.x, y: gameState.currentVehicle.y };
-  // Calculate new position
-  let newPosition = { x: gameState.currentVehicle.x, y: gameState.currentVehicle.y };
-  
-  switch (direction) {
-      case 'up':
-          newPosition.y = Math.max(0, gameState.currentVehicle.y - 1);
-          break;
-      case 'down':
-          newPosition.y = Math.min(config.GRID_SIZE - 1, gameState.currentVehicle.y + 1);
-          break;
-      case 'left':
-          newPosition.x = Math.max(0, gameState.currentVehicle.x - 1);
-          break;
-      case 'right':
-          newPosition.x = Math.min(config.GRID_SIZE - 1, gameState.currentVehicle.x + 1);
-          break;
+  const oldPos = { x: gameState.currentVehicle.x, y: gameState.currentVehicle.y };
+  let targetPos = { ...oldPos };
+  if (direction === 'up')    targetPos.y = Math.max(0, oldPos.y - 1);
+  if (direction === 'down')  targetPos.y = Math.min(config.GRID_SIZE - 1, oldPos.y + 1);
+  if (direction === 'left')  targetPos.x = Math.max(0, oldPos.x - 1);
+  if (direction === 'right') targetPos.x = Math.min(config.GRID_SIZE - 1, oldPos.x + 1);
+
+  // BLOCKING: stay put if next tile is ⬛
+  if (isBlockTile(gameState.gridWorld[targetPos.y][targetPos.x])) {
+    targetPos = { ...oldPos }; // cancel move
   }
-  
-  // Record move
+
   const currentTrialData = getCurrentTrialData();
-  if (!currentTrialData) return;
-  
-  currentTrialData.moves.push({
+  if (currentTrialData) {
+    currentTrialData.moves.push({
       direction,
-      fromPosition: { ...oldPosition },
-      toPosition: { ...newPosition },
+      fromPosition: oldPos,
+      toPosition: targetPos,
       time: Date.now() - currentTrialData.startTime
-  });
-  
-  // Update vehicle position
-  gameState.currentVehicle.x = newPosition.x;
-  gameState.currentVehicle.y = newPosition.y;
-  
+    });
+  }
+
+  gameState.currentVehicle.x = targetPos.x;
+  gameState.currentVehicle.y = targetPos.y;
+
   checkCollisions();
   renderGrid();
 }
 
+// ──────────────────────────────────────────────────────────────
+//  COLLISION LOGIC – removed terminator‑ends‑trial branch
+// ──────────────────────────────────────────────────────────────
+
 function checkCollisions() {
-  const currentTrialData = getCurrentTrialData(); 
+  const currentTrialData = getCurrentTrialData();
   if (!currentTrialData) return;
   if (!currentTrialData.hits) currentTrialData.hits = [];
 
-  // Check for obstacle collision
-  const hitObstacle = gameState.obstacles.findIndex(
-      obs => obs.x === gameState.currentVehicle.x && obs.y === gameState.currentVehicle.y
-  );
-  
-  if (hitObstacle !== -1) {
-      // Remove obstacle
-      gameState.obstacles.splice(hitObstacle, 1);
-      gameState.gridWorld[gameState.currentVehicle.y][gameState.currentVehicle.x] = 'empty';
-      
-      // Decrease score
-      gameState.score -= 10;
-      let failCount = parseInt(document.getElementById('failure-count').textContent, 10);
-      document.getElementById('failure-count').textContent = failCount + 1;
-      document.getElementById('score').textContent = gameState.score;
-      currentTrialData.hits.push('obstacle'); 
-      currentTrialData.obstaclesHit++;
+  // 🔥 obstacle hit (still allowed – penalises & removes)
+  const idxObs = gameState.obstacles.findIndex(o => o.x === gameState.currentVehicle.x && o.y === gameState.currentVehicle.y);
+  if (idxObs !== -1) {
+    gameState.obstacles.splice(idxObs, 1);
+    gameState.gridWorld[gameState.currentVehicle.y][gameState.currentVehicle.x] = 'empty';
+    gameState.score -= 10;
+    document.getElementById('failure-count').textContent = (+document.getElementById('failure-count').textContent + 1);
+    document.getElementById('score').textContent = gameState.score;
+    currentTrialData.hits.push('obstacle');
+    currentTrialData.obstaclesHit++;
   }
-  
-  // Check for reward collision
-  const collectedReward = gameState.rewards.findIndex(rew => rew.x === gameState.currentVehicle.x && rew.y === gameState.currentVehicle.y);
-  
-  if (collectedReward !== -1) {
-      // Remove reward
-      gameState.rewards.splice(collectedReward, 1);
-      gameState.gridWorld[gameState.currentVehicle.y][gameState.currentVehicle.x] = 'empty';
-      
-      // Increase score
-      gameState.score += 10;
-      let successCount = parseInt(document.getElementById('success-count').textContent, 10);
-      document.getElementById('success-count').textContent = successCount + 1;
 
-      document.getElementById('score').textContent = gameState.score;
-      
-      // Record reward collection
-      const currentTrialData = getCurrentTrialData();
-      if (!currentTrialData) return;
-      
-      currentTrialData.hits.push('reward');
-      currentTrialData.rewardsCollected++;
+  // 💰 reward
+  const idxRew = gameState.rewards.findIndex(r => r.x === gameState.currentVehicle.x && r.y === gameState.currentVehicle.y);
+  if (idxRew !== -1) {
+    gameState.rewards.splice(idxRew, 1);
+    gameState.gridWorld[gameState.currentVehicle.y][gameState.currentVehicle.x] = 'empty';
+    gameState.score += 10;
+    document.getElementById('success-count').textContent = (+document.getElementById('success-count').textContent + 1);
+    document.getElementById('score').textContent = gameState.score;
+    currentTrialData.hits.push('reward');
+    currentTrialData.rewardsCollected++;
   }
-  if (gameState.gridWorld[gameState.currentVehicle.y][gameState.currentVehicle.x] === 'terminator') {
-    gameState.inputEnabled = false
-    console.log("Hit terminator tile. Ending trial.");
-    currentTrialData.hits.push('terminator');
-    if (gameState.currentPhase === 0) {   // practice phase
-      // jump to your helper that shows the quiz / retry screen
-      setTimeout(practice.endPracticeTrial, 0);
-    } else {
-      // learning & planning phases keep the normal flow
-      setTimeout(endTrial, 0);
-    }
+
+  // No special handling for ⬛ – you can’t stand on it.
+
+  // If all rewards gone, end trial
+  if (gameState.rewards.length === 0) {
+    setTimeout(endTrial, 0);
   }
-        
-  
-  // Check if all rewards are collected or no more moves possible
-  if (gameState.rewards.length === 0 || (gameState.obstacles.length === 0 && gameState.rewards.length === 0)) {
-    setTimeout(endTrial, 0); 
-  }
-  if (gameState.currentPhase === 0 && (gameState.rewards.length === 0)) {
+  if (gameState.currentPhase === 0 && gameState.rewards.length === 0) {
     setTimeout(practice.endPracticeTrial, 0);
   }
 }
@@ -1198,9 +1158,10 @@ function continueToNextTrial() {
 
 function startPlanningPhase() {
   gameState.currentPhase = 2;
+  currentPhase = 'plan';
   gameState.currentTrial= 1;
 
-  const allVehicleTypes = ['car_small', 'car_medium', 'car_big', 'truck_small', 'truck_medium', 'truck_big', 'pickup_truck_small', 'pickup_truck_big'];
+  const allVehicleTypes = ['car_small', 'car_medium', 'car_big', 'sedan_small', 'sedan_medium', 'sedan_big', 'pickup_sedan_small', 'pickup_sedan_big'];
   
   // allVehicleTypes.forEach(key => {
   //   vehicleColorQueues[key] = shuffleArray(config.COLOR_PALETTE.slice());
@@ -1278,41 +1239,32 @@ function convertToPlanningMode() {
 }
 
 function createPlanningTrial() {
-  const maze = gameState.PLAN_POOL[gameState.planOrder[gameState.currentTrial- 1]];
-  if (!maze || !maze.vehicleType) {
-  console.error("Missing maze or vehicleType in PLAN_POOL:", maze);
-  return;
-}
+  const maze = gameState.PLAN_POOL[gameState.planOrder[gameState.currentTrial - 1]];
+  if (!maze || !maze.vehicleType) { console.error('Missing maze'); return; }
+
   const vehicleData = maze.vehicleType;
-  const key = `${vehicleData.type}_${vehicleData.size}`;
-  let queue;
-  queue = vehicleColorQueuesPlan[key];
-  //let queue = vehicleColorQueues[key];
+  const vehIsSedan  = vehicleData.type === 'sedan';
+  currentPhase = 'plan';
 
-  if (!queue || queue.length === 0) {
-    //queue = shuffleArray(config.COLOR_PALETTE.slice());
-    vehicleColorQueuesPlan[key] = shuffleArray([...config.COLOR_PALETTE_PLAN]);
-    //vehicleColorQueues[key] = queue;
+  if (vehIsSedan) {
+    const { color, patternUrl } = makeSedanAppearance('plan', sedanIndex++);
+    gameState.currentVehicle = { ...vehicleData, color, patternUrl, x: maze.start.x, y: maze.start.y };
+  } else {
+    const key = `${vehicleData.type}_${vehicleData.size}`;
+    let queue = vehicleColorQueuesPlan[key];
+    if (!queue || queue.length === 0) {
+      vehicleColorQueuesPlan[key] = shuffleArray([...config.COLOR_PALETTE_PLAN]);
+      queue = vehicleColorQueuesPlan[key];
+    }
+    const color = queue.shift();
+    gameState.currentVehicle = { ...vehicleData, color, x: maze.start.x, y: maze.start.y };
   }
-  const color = queue.shift();
-  console.log("Assigned color:", color);
 
-
-  gameState.currentVehicle = {
-    type: vehicleData.type,
-    size: vehicleData.size,
-    keys: vehicleData.keys,
-    color: color,
-    x: 0,
-    y: 0
-  };
-  
-  loadMazeFrom(gameState.PLAN_POOL, (gameState.planOrder[gameState.currentTrial- 1]));
-
+  loadMazeFrom(gameState.PLAN_POOL, gameState.planOrder[gameState.currentTrial - 1]);
   updateVehicleInfo();
-  console.log(`Planning Phase - Vehicle: ${gameState.currentVehicle.type}, Size: ${gameState.currentVehicle.size}`);
-  vehicles.renderVehiclePreview(); 
+  vehicles.renderVehiclePreview();
   startTrialTimer();
+
   
   // Clear move sequence input
   const moveSequenceInput = document.getElementById('move-sequence');
@@ -1510,7 +1462,7 @@ function showConsent(thenRunGame) {
       <h2>Research Consent Form</h2>
       <div class="scroll">
         <p>You are invited to participate in a study about decision-making
-           conducted by Drs. Marine Hainguerlot and Paul Sharp at Bar-Ilan University.</p>
+           conducted by Dr. Paul Sharp at Bar-Ilan University.</p>
         <p>You will first complete a short questionnaire (~5 min) and may then
            play an online game (~15 min). Average pay rate: <strong>$12 / h</strong>.
            Bonus may depend on performance.</p>
@@ -1539,7 +1491,7 @@ function showQuestionnaires(thenRunGame) {
     <form id="qsForm" class="overlay scroll">
       <h2>Questionnaires</h2>
 
-      <h3>Part 1 – Worry<br>(1 = not at all typical … 5 = very typical)</h3>
+      <h3>Rate each of the following statements on a scale of 1 (“not at all typical of me”) to 5 (“very typical of me”)<br></h3>
       <ol class="qs">
         ${[
           'My worries overwhelm me.',
@@ -1555,7 +1507,7 @@ function showQuestionnaires(thenRunGame) {
         ).join('')}
       </ol>
 
-      <h3>Part 2 – Physical sensations<br>(1 = not at all … 5 = extremely)</h3>
+      <h3>Below is a list of feelings, sensations, problems, and experiences that people sometimes have. Read each item and then fill in the blank with the number that best describes how much you have felt or experienced things this way in general<br>(1 = not at all to 5 = extremely)</h3>
       <ol class="qs">
         ${[
           'Was short of breath',

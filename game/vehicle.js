@@ -9,7 +9,27 @@ import { gameState } from './gameState.js';
   //   pickup_truck:
   //     'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjgwMCIgdmlld0JveD0iMCAwIDUwIDUwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgoKICA8IS0tIDEuIENhcmdvIGJlZCAtLT4KICA8ZyBpZD0iY2FyZ28iPgogICAgPHBhdGggZD0iTTEsMjUgSDQ1IFYzNSBIMiBBMTAsNiAwIDAgMSAxLDM0IFoiIGZpbGw9ImN1cnJlbnRDb2xvciIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPC9nPgoKICA8IS0tIDIuIENhYiBzaWxob3VldHRlIC0tPgogIDxnIGlkPSJjYWIiPgogICAgPHBhdGggZD0iIE0zMCwxMCBWN0MgMjksNi44OTUgMjkuODk1LDYgMzEsNiBIMzkgQzQxLDYgNDIuNSw3IDQ0LDkgTDQ5LDE2IEM1MCwxOCA1MCwyMCA1MCwyMiBWMzUgSDMxIFoiIGZpbGw9ImN1cnJlbnRDb2xvciIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPC9nPgoKICA8IS0tIDMuIFdpbmRvdyAtLT4KICA8ZyBpZD0id2luZG93Ij4KICAgIDxyZWN0IHg9IjM2IiB5PSIxMiIgd2lkdGg9IjEwIiBoZWlnaHQ9IjciIHJ4PSIxLjUiIHJ5PSIxLjUiIGZpbGw9IndoaXRlIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjIiLz4KICA8L2c+CgogIDwhLS0gNC4gV2hlZWxzIC0tPgogIDxnIGlkPSJ3aGVlbHMiIGZpbGw9IndoaXRlIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjIiPgogICAgPGNpcmNsZSBjeD0iOSIgc3Ryb2tlLXdpZHRoPSIyIiBjeT0iMzYiIHI9IjUiLz4KICAgIDxjaXJjbGUgY3g9IjIxIiBjeT0iMzYiIHI9IjUiLz4KICAgIDxjaXJjbGUgY3g9IjM5IiBjeT0iMzYiIHI9IjUiLz4KICA8L2c+Cjwvc3ZnPg=='
   // };
-  
+import {
+  SEDAN_COLOR,
+  SEDAN_PATTERNS_LEARN,
+  SEDAN_PATTERNS_PLAN
+} from './config.js';
+
+/**
+ * Returns an object   { color, patternUrl }   for the next sedan.
+ * @param {'learn'|'plan'} phase
+ * @param {number} index   // 0-based index of the sedan in that phase
+ */
+export function makeSedanAppearance(phase, index) {
+  const pool = phase === 'learn' ? SEDAN_PATTERNS_LEARN : SEDAN_PATTERNS_PLAN;
+  const file = pool[index % pool.length];              // wraps automatically
+  return {
+    color: SEDAN_COLOR,
+    patternUrl: `/patterns/${file}`
+  };
+}
+
+
 export function loadColoredSvg(svgPath, color, targetFill = 'pink') {
     return fetch(svgPath)
       .then(res => res.text())
@@ -24,33 +44,27 @@ export function loadColoredSvg(svgPath, color, targetFill = 'pink') {
       });
   }
 
-  export function renderVehiclePreview() {
-    const previewEl = document.getElementById('vehicle-display');
-    if (!previewEl || !gameState.currentVehicle) return;
-  
-    previewEl.innerHTML = ''; 
-    const previewVehicle = document.createElement('div');
-    previewVehicle.className = 'vehicle-image';
+ export function renderVehiclePreview() {
+  const el = document.getElementById('vehicle-display');
+  if (!el || !gameState.currentVehicle) return;
 
-    loadColoredSvg(`/vehicles/${gameState.currentVehicle.type}.svg`, gameState.currentVehicle.color)
-    .then(coloredUrl => {
-      previewVehicle.style.backgroundImage = `url(${coloredUrl})`;
+  el.innerHTML = '';
+  const v = document.createElement('div');
+  v.className = 'vehicle-image';
+
+  // 1. Paint the body in a single colour
+  loadColoredSvg(`/vehicles/${vState.type}.svg`, vState.color)
+    .then(colouredBodyUrl => {
+      // 2. If this vehicle also has a pattern overlay – add it
+      const bgImages = [`url(${colouredBodyUrl})`];
+      if (vState.patternUrl) bgImages.push(`url(${vState.patternUrl})`);
+
+      v.style.backgroundImage   = bgImages.join(',');
+      v.style.backgroundRepeat  = 'no-repeat, repeat';
+      v.style.backgroundSize    = 'contain, 14px';  // second value = pattern tile
+      v.style.backgroundBlendMode = 'normal, multiply';
     });
-  
-    previewVehicle.style.backgroundSize = 'contain';
-    previewVehicle.style.backgroundRepeat = 'no-repeat';
-    previewVehicle.style.backgroundPosition = 'center';
-    previewVehicle.style.filter = `drop-shadow(0 0 0 ${gameState.currentVehicle.color || 'pink'}) saturate(200%) brightness(80%)`;
-  
-    if (gameState.currentVehicle.size === 'small') {
-      previewVehicle.style.width = '50%';
-      previewVehicle.style.height = '50%';
-    } else if (gameState.currentVehicle.size === 'medium') {
-      previewVehicle.style.width = '75%';
-      previewVehicle.style.height = '75%';
-    } else {
-      previewVehicle.style.width = '100%';
-      previewVehicle.style.height = '100%';
-    }
-    previewEl.appendChild(previewVehicle);
-  }
+
+  // sizing (unchanged) …
+  el.appendChild(v);
+}

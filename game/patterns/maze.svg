@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" stroke-linecap="square">
+
+<rect width="100%" height="100%" fill="white"/>
+<path d="M2 2 H38 V38 H2 V12 H28 V28 H12 V22" stroke="black" stroke-width="3" fill="none"/>
+
+</svg>

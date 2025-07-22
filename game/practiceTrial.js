@@ -128,9 +128,9 @@ function showPracticeQuestions() {
             <button data-question="4" data-choice="B">B) Every second trial</button>
             <button data-question="4" data-choice="C">C) A few randomly selected ones</button>
 
-            <p>5. What happens when you hit the terminator tile (✖)?</p>
+            <p>5. What happens if you hit the obstacle tile (⬛)?</p>
             <button data-question="5" data-choice="A">A) You lose points</button>
-            <button data-question="5" data-choice="B">B) The trial simply ends</button>
+            <button data-question="5" data-choice="B">B) You CANNOT hit it!</button>
             <button data-question="5" data-choice="C">C) You skip to the next phase</button>
 
             <div id="quiz-feedback" style="margin-top: 20px;"></div>
