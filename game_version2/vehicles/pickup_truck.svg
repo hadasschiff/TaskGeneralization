@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg width="800" height="800" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- 1. Cargo bed -->
+  <g id="cargo">
+    <path
+      d="M1,25 H45 V35 H2 A10,6 0 0 1 1,34 Z "
+      fill="currentColor"
+      stroke="black"
+      stroke-width="2"
+    />
+  </g>
+
+  <!-- 2. Cab silhouette -->
+  <g id="cab">
+    <path
+      d=" M30,10 V7 C29,6.895 29.895,6 31,6 H39 C41,6 42.5,7 44,9 L49,16 C50,18 50,20 50,22 V35 H31 Z "
+      fill="currentColor"
+      stroke="black"
+      stroke-width="2"
+    />
+  </g>
+
+  <!-- 3. Window -->
+  <g id="window">
+    <rect
+      x="36" y="12" width="10" height="7"
+      rx="1.5" ry="1.5"
+      fill="white"
+      stroke="black"
+      stroke-width="2"
+    />
+  </g>
+
+  <!-- 4. Wheels -->
+  <g id="wheels" fill="white" stroke="black" stroke-width="2">
+    <circle cx="9"  cy="36" r="5"/>
+    <circle cx="21" cy="36" r="5"/>
+    <circle cx="39" cy="36" r="5"/>
+  </g>
+</svg>

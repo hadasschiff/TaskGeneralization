@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg width="800" height="800" viewBox="0 0 50 50"
+     xmlns="http://www.w3.org/2000/svg">
+
+  <!-- 1. Full car body silhouette -->
+  <g id="body" fill="currentColor" stroke="black" stroke-width="2"
+     stroke-linejoin="round" stroke-linecap="round">
+    <path d=" M15,12 C10,12 6.5,14.5 5,18 L4,22 C2.5,23 1.5,25 1.5,29 V35 H49 V29 L48,24 C47,22 45.5,22 45.5,22 L35.5,21 L33,15 C32.5,14 32,14 32,14 L29,12 Z "/>
+  </g>
+
+<!-- Windows -->
+<g id="windows" fill="white" stroke="black" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round">
+  <!-- Left window -->
+  <path d="M8,22 Q8,14 16,14 H23 V22 Z"/>
+
+  <!-- Right window -->
+  <path d="M25,22 V14 H28 Q32,14 33,22 Z"/>
+</g>
+
+  <!-- 3. Wheels -->
+  <g id="wheels" fill="white" stroke="black" stroke-width="2"
+     stroke-linejoin="round" stroke-linecap="round">
+    <circle cx="12" cy="36" r="4"/>
+    <circle cx="38" cy="36" r="4"/>
+  </g>
+</svg>

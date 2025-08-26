@@ -1,0 +1,29 @@
+<svg width="800px" height="800px" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- Cargo Box -->
+  <g id="cargo">
+    <rect x="2" y="13" width="27" height="32" rx="2" ry="2" fill="currentColor" stroke="black" stroke-width="2"/>
+  </g>
+
+<!-- Cab (lowered style) -->
+<g id="cab">
+  <path d="M29 23H39Q41 23 43 25L49 32Q50 33.5 50 36V42Q50 43.5 48.5 45H31V26Q31 23 34 23Z" 
+    fill="currentColor" stroke="black" stroke-width="2"/>
+</g>
+
+<!-- Window -->
+<g id="window">
+  <path
+    d="M39 27L39 32Q39 33 40 33H48Q46 30.5 44.5 28.5L42 26Q41 25 40 25H40Q39 25.2 39 27Z"
+    fill="white"
+    stroke="black"
+    stroke-width="2"
+  />
+</g>
+
+  <!-- Wheels -->
+  <g id="wheels">
+    <circle cx="13" cy="44" r="5" fill="white" stroke="black" stroke-width="3"/>
+    <circle cx="39" cy="44" r="5" fill="white" stroke="black" stroke-width="3"/>
+  </g>
+</svg>
