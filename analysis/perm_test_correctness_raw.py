@@ -77,13 +77,19 @@ def p_val_gt(null, obs):
     return ( (null >= obs).sum() + 1 ) / (len(null) + 1)
 
 # ───────── main ────────────────────────────────────────────────────────────
-CSV = Path(sys.argv[1] if len(sys.argv) > 1 else "game_trials_export.csv")
+CSV = Path("game_trials_export_v1.csv")
 if not CSV.exists():
     sys.exit(f"CSV not found: {CSV}")
 
 df = pd.read_csv(CSV)
 df = df[df["phase"] == 2]                 # keep Phase-2 trials only
 df["vehicleType"] = df["vehicleType"].str.lower()
+
+# --- counts --- 
+n_participants = df["sessionId"].nunique() 
+n_trials = len(df) 
+print(f"N participants (Phase 2, ≥1 trial): {n_participants}") 
+print(f"N trials (Phase 2): {n_trials}")
 
 # -------- recompute metrics (observed) ------------------------------------
 df["recomputed_correct"] = df.apply(recompute_correct, axis=1)
@@ -161,6 +167,6 @@ def plot_distribution(null_dist, obs, title, p_val, color, fname):
 
 plot_distribution(null_valid, obs_valid,
                   "Total Generalization",
-                  p_valid, "gold", "perm_valid_generalization.png")
+                  p_valid, "gold", "perm_valid_generalization_study1.png")
 
 print("Saved figure: perm_valid_generalization.png")
